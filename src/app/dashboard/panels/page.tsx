@@ -35,12 +35,12 @@ import { Label } from "@/components/ui/label"
 
 
 export default function PanelsPage() {
-  const { firestore } = useFirebase();
+  const { firestore, user } = useFirebase();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newPanel, setNewPanel] = useState({ name: '', apiUrl: '', apiKey: ''});
 
 
-  const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
+  const panelsRef = useMemoFirebase(() => firestore && user ? collection(firestore, 'smm_panels') : null, [firestore, user]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const handleAddPanel = () => {

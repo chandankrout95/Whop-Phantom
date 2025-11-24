@@ -31,7 +31,7 @@ export function RecentOrders() {
   const servicesQuery = useMemoFirebase(() => firestore && user ? query(collectionGroup(firestore, 'services')) : null, [firestore, user]);
   const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
 
-  const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
+  const panelsRef = useMemoFirebase(() => firestore && user ? collection(firestore, 'smm_panels') : null, [firestore, user]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const getStatusVariant = (status: string) => {

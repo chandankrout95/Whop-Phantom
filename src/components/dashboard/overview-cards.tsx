@@ -15,7 +15,7 @@ import { Skeleton } from '../ui/skeleton';
 export function OverviewCards() {
   const { firestore, user } = useFirebase();
 
-  const panelsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'smm_panels')) : null, [firestore]);
+  const panelsRef = useMemoFirebase(() => firestore && user ? query(collection(firestore, 'smm_panels')) : null, [firestore, user]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
   
   const ordersRef = useMemoFirebase(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`)) : null, [firestore, user]);
