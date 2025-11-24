@@ -70,7 +70,6 @@ export function OrderForm() {
   }, [firestore, user]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
-
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
     defaultValues: {
@@ -95,8 +94,8 @@ export function OrderForm() {
   }, [services, selectedCategory]);
   
   const uniqueServiceNames = useMemo(() => {
-      if (!availableServices) return [];
-      return [...new Set(availableServices.map((s) => s.name))];
+    if (!availableServices) return [];
+    return [...new Set(availableServices.map((s) => s.name))];
   }, [availableServices]);
 
   const handleFindPanel = async () => {
