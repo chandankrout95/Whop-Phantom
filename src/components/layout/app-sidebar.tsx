@@ -73,12 +73,6 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarSeparator />
         <SidebarMenu>
-           <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Logout" onClick={handleSignOut}>
-                <LogOut />
-                <span>Logout</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Profile">
               <div className="flex items-center gap-2">
@@ -90,6 +84,12 @@ export function AppSidebar() {
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
+           <SidebarMenuItem>
+              <SidebarMenuButton tooltip="Logout" onClick={handleSignOut}>
+                <LogOut />
+                <span>Logout</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </>
