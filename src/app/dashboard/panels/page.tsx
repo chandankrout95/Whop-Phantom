@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Panel } from "@/lib/types";
 import { PlusCircle, Loader2 } from "lucide-react";
-import { useCollection, addDocumentNonBlocking, useFirebase } from '@/firebase';
+import { useCollection, addDocumentNonBlocking, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import {
   Dialog,
@@ -40,7 +40,7 @@ export default function PanelsPage() {
   const [newPanel, setNewPanel] = useState({ name: '', apiUrl: '', apiKey: ''});
 
 
-  const panelsRef = useMemo(() => collection(firestore, 'smm_panels'), [firestore]);
+  const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const handleAddPanel = () => {
@@ -52,6 +52,7 @@ export default function PanelsPage() {
       balance: Math.floor(Math.random() * 500)
     }
 
+    if (!panelsRef) return;
     addDocumentNonBlocking(panelsRef, panelData);
     setNewPanel({ name: '', apiUrl: '', apiKey: ''});
     setIsDialogOpen(false);

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { Order, Service, Panel } from "@/lib/types";
-import { useCollection, useFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit, collectionGroup } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
@@ -25,13 +25,13 @@ import { Loader2 } from 'lucide-react';
 export function RecentOrders() {
   const { firestore, user } = useFirebase();
 
-  const ordersRef = useMemo(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`), orderBy('createdAt', 'desc'), limit(5)) : null, [firestore, user]);
+  const ordersRef = useMemoFirebase(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`), orderBy('createdAt', 'desc'), limit(5)) : null, [firestore, user]);
   const { data: recentOrders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
 
-  const servicesQuery = useMemo(() => firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore]);
+  const servicesQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore]);
   const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
 
-  const panelsRef = useMemo(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
+  const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const getStatusVariant = (status: string) => {
