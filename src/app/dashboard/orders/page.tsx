@@ -22,7 +22,7 @@ import type { Order, Service, Panel } from "@/lib/types";
 import { PlusCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, collectionGroup } from 'firebase/firestore';
+import { collection, query, orderBy, collectionGroup, Timestamp } from 'firebase/firestore';
 
 
 export default function OrdersPage() {
@@ -53,6 +53,14 @@ export default function OrdersPage() {
   };
 
   const isLoading = ordersLoading || servicesLoading || panelsLoading;
+
+  const formatDate = (dateValue: any) => {
+    if (!dateValue) return '';
+    if (dateValue instanceof Timestamp) {
+      return dateValue.toDate().toLocaleDateString();
+    }
+    return new Date(dateValue).toLocaleDateString();
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -103,7 +111,7 @@ export default function OrdersPage() {
                       {panel?.name}
                     </TableCell>
                      <TableCell className="hidden md:table-cell">
-                      {new Date(order.createdAt).toLocaleDateString()}
+                      {formatDate(order.createdAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       ${order.charge.toFixed(2)}

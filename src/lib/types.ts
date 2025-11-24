@@ -1,3 +1,5 @@
+import { FieldValue } from "firebase/firestore";
+
 export type Panel = {
   id: string;
   name: string;
@@ -23,7 +25,7 @@ export type Order = {
   link: string;
   quantity: number;
   charge: number;
-  createdAt: string;
+  createdAt: FieldValue | string;
   status: "Pending" | "In Progress" | "Completed" | "Canceled" | "Partial";
   panelId: string;
   userId: string;

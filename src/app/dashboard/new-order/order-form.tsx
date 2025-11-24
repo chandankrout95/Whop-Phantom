@@ -37,7 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Service, Panel } from "@/lib/types";
 import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
-import { collection, collectionGroup, query } from "firebase/firestore";
+import { collection, collectionGroup, query, serverTimestamp } from "firebase/firestore";
 
 const orderFormSchema = z.object({
   category: z.string().min(1, "Please select a category."),
@@ -161,7 +161,7 @@ export function OrderForm() {
         charge: recommendation.charge,
         status: 'Pending',
         panelId: recommendation.panelId,
-        createdAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
     };
 
     const ordersRef = collection(firestore, `users/${user.uid}/orders`);
