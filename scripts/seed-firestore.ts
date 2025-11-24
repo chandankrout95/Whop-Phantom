@@ -1,34 +1,40 @@
-import type { Panel, Service, Order } from './types';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, writeBatch } from 'firebase/firestore';
+import { firebaseConfig } from '../src/firebase/config'; 
 
-export const panels: Panel[] = [
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+const panels = [
   {
     id: 'panel-1',
     name: 'SpeedySMM',
     balance: 150.75,
-    apiEndpoint: 'https://speedysmm.com/api/v2',
+    apiUrl: 'https://speedysmm.com/api/v2',
     apiKey: 'key_speedy_123',
   },
   {
     id: 'panel-2',
     name: 'SMMKing',
     balance: 425.5,
-    apiEndpoint: 'https://smmking.net/api/v2',
+    apiUrl: 'https://smmking.net/api/v2',
     apiKey: 'key_king_456',
   },
   {
     id: 'panel-3',
     name: 'InstaBoost',
     balance: 89.2,
-    apiEndpoint: 'https://instaboost.io/api/v2',
+    apiUrl: 'https://instaboost.io/api/v2',
     apiKey: 'key_insta_789',
   },
 ];
 
-export const services: Service[] = [
+const services = [
   // Instagram Followers
   {
     id: 'svc-001',
-    panelId: 'panel-1',
+    smmPanelId: 'panel-1',
     name: 'Instagram Followers [HQ]',
     category: 'Instagram',
     rate: 1.2,
@@ -38,7 +44,7 @@ export const services: Service[] = [
   },
   {
     id: 'svc-002',
-    panelId: 'panel-2',
+    smmPanelId: 'panel-2',
     name: 'Instagram Followers [HQ]',
     category: 'Instagram',
     rate: 1.1,
@@ -48,7 +54,7 @@ export const services: Service[] = [
   },
   {
     id: 'svc-003',
-    panelId: 'panel-3',
+    smmPanelId: 'panel-3',
     name: 'Instagram Followers [Real]',
     category: 'Instagram',
     rate: 2.5,
@@ -59,7 +65,7 @@ export const services: Service[] = [
   // Instagram Likes
   {
     id: 'svc-004',
-    panelId: 'panel-1',
+    smmPanelId: 'panel-1',
     name: 'Instagram Likes',
     category: 'Instagram',
     rate: 0.5,
@@ -69,7 +75,7 @@ export const services: Service[] = [
   },
   {
     id: 'svc-005',
-    panelId: 'panel-2',
+    smmPanelId: 'panel-2',
     name: 'Instagram Likes',
     category: 'Instagram',
     rate: 0.45,
@@ -80,7 +86,7 @@ export const services: Service[] = [
   // TikTok Views
   {
     id: 'svc-006',
-    panelId: 'panel-2',
+    smmPanelId: 'panel-2',
     name: 'TikTok Views',
     category: 'TikTok',
     rate: 0.01,
@@ -90,7 +96,7 @@ export const services: Service[] = [
   },
   {
     id: 'svc-007',
-    panelId: 'panel-1',
+    smmPanelId: 'panel-1',
     name: 'TikTok Views',
     category: 'TikTok',
     rate: 0.015,
@@ -101,7 +107,7 @@ export const services: Service[] = [
   // YouTube Subscribers
   {
     id: 'svc-008',
-    panelId: 'panel-3',
+    smmPanelId: 'panel-3',
     name: 'YouTube Subscribers',
     category: 'YouTube',
     rate: 15.0,
@@ -111,55 +117,36 @@ export const services: Service[] = [
   },
 ];
 
-export const orders: Order[] = [
-  {
-    id: 'ord-1001',
-    serviceId: 'svc-005',
-    panelId: 'panel-2',
-    link: 'https://instagram.com/p/Cxyz...',
-    quantity: 1000,
-    charge: 0.45,
-    date: '2023-10-27T10:00:00Z',
-    status: 'Completed',
-  },
-  {
-    id: 'ord-1002',
-    serviceId: 'svc-001',
-    panelId: 'panel-1',
-    link: 'https://instagram.com/username',
-    quantity: 500,
-    charge: 0.6,
-    date: '2023-10-27T11:30:00Z',
-    status: 'In Progress',
-  },
-  {
-    id: 'ord-1003',
-    serviceId: 'svc-006',
-    panelId: 'panel-2',
-    link: 'https://tiktok.com/v/abcd...',
-    quantity: 50000,
-    charge: 0.5,
-    date: '2023-10-28T09:00:00Z',
-    status: 'Pending',
-  },
-  {
-    id: 'ord-1004',
-    serviceId: 'svc-008',
-    panelId: 'panel-3',
-    link: 'https://youtube.com/channel/UC...',
-    quantity: 100,
-    charge: 1.5,
-    date: '2023-10-26T14:00:00Z',
-    status: 'Canceled',
-  },
-  {
-    id: 'ord-1005',
-    serviceId: 'svc-002',
-    panelId: 'panel-2',
-    link: 'https://instagram.com/anotheruser',
-    quantity: 2000,
-    charge: 2.2,
-    date: '2023-10-28T12:15:00Z',
-    status: 'Completed',
-  },
-];
+
+async function seedDatabase() {
+  console.log('Seeding database...');
+  const batch = writeBatch(db);
+
+  // Seed panels
+  const panelsCollection = collection(db, 'smm_panels');
+  panels.forEach(panel => {
+    const docRef = panelsCollection.doc(panel.id);
+    batch.set(docRef, panel);
+  });
+  console.log('Panels queued for seeding.');
+
+  // Seed services
+  services.forEach(service => {
+    const servicesCollection = collection(db, `smm_panels/${service.smmPanelId}/services`);
+    const docRef = servicesCollection.doc(service.id);
+    batch.set(docRef, service);
+  });
+  console.log('Services queued for seeding.');
+
+
+  try {
+    await batch.commit();
+    console.log('Database seeded successfully!');
+  } catch (error) {
+    console.error('Error seeding database: ', error);
+  } finally {
+    process.exit();
+  }
+}
+
+seedDatabase();

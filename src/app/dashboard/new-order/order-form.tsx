@@ -30,12 +30,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { services } from "@/lib/data";
 import { getRoutingRecommendation } from "../actions";
 import type { RouteOrderOutput } from "@/ai/flows/automated-order-routing";
 import { Loader2, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { Service, Panel } from "@/lib/types";
+import { useCollection, useFirebase, addDocumentNonBlocking } from "@/firebase";
+import { collection } from "firebase/firestore";
 
 const orderFormSchema = z.object({
   category: z.string().min(1, "Please select a category."),
@@ -50,10 +52,25 @@ const orderFormSchema = z.object({
 type OrderFormValues = z.infer<typeof orderFormSchema>;
 
 export function OrderForm() {
-  const [recommendation, setRecommendation] = useState<RouteOrderOutput | null>(null);
+  const [recommendation, setRecommendation] = useState<RouteOrderOutput & { panelId: string; serviceId: string; charge: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { firestore, user } = useFirebase();
+
+  const servicesRef = useMemo(() => collection(firestore, 'smm_panels/panel-1/services')
+    .withConverter({
+      toFirestore: (data: Service) => data,
+      fromFirestore: (snap) => snap.data() as Service
+    }), [firestore]);
+  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesRef);
+
+  const panelsRef = useMemo(() => collection(firestore, 'smm_panels')
+    .withConverter({
+        toFirestore: (data: Panel) => data,
+        fromFirestore: (snap) => snap.data() as Panel
+    }), [firestore]);
+  const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
@@ -67,9 +84,9 @@ export function OrderForm() {
   });
 
   const selectedCategory = form.watch("category");
-  
-  const uniqueCategories = useMemo(() => [...new Set(services.map((s) => s.category))], []);
-  const availableServices = useMemo(() => services.filter((s) => s.category === selectedCategory), [selectedCategory]);
+
+  const uniqueCategories = useMemo(() => services ? [...new Set(services.map((s) => s.category))] : [], [services]);
+  const availableServices = useMemo(() => services?.filter((s) => s.category === selectedCategory) || [], [selectedCategory, services]);
   const uniqueServiceNames = useMemo(() => [...new Set(availableServices.map(s => s.name))], [availableServices]);
 
   const handleFindPanel = async () => {
@@ -86,14 +103,37 @@ export function OrderForm() {
       return;
     }
 
+    if (!services || !panels) {
+        toast({
+            variant: "destructive",
+            title: "Data not loaded",
+            description: "Services or panels data is not available yet.",
+        });
+        return;
+    }
+
     setIsLoading(true);
     try {
+       const offeringServices = services.filter(s => s.name === service);
+       const offeringPanel = panels.find(p => p.name === offeringServices[0].smmPanelId)
       const result = await getRoutingRecommendation({
         serviceName: service,
         quantity: quantity,
         preference: routingPreference,
+        services,
+        panels
       });
-      setRecommendation(result);
+      const bestPanel = panels.find(p => p.name === result.bestPanel);
+      const bestService = services.find(s => s.smmPanelId === bestPanel?.id && s.name === service);
+      if (!bestPanel || !bestService) throw new Error("Recommendation engine failed.")
+
+      setRecommendation({
+          ...result,
+          panelId: bestPanel.id,
+          serviceId: bestService.id,
+          charge: (bestService.rate / 1000) * quantity
+      });
+
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
       setError(errorMessage);
@@ -103,7 +143,22 @@ export function OrderForm() {
   };
 
   const onSubmit = (data: OrderFormValues) => {
-    console.log(data, recommendation);
+    if (!recommendation || !user) return;
+
+    const orderData = {
+        userId: user.uid,
+        serviceId: recommendation.serviceId,
+        link: data.link,
+        quantity: data.quantity,
+        charge: recommendation.charge,
+        status: 'Pending',
+        panelId: recommendation.panelId,
+        createdAt: new Date().toISOString(),
+    };
+
+    const ordersRef = collection(firestore, `users/${user.uid}/orders`);
+    addDocumentNonBlocking(ordersRef, orderData);
+
     toast({
       title: "Order Placed!",
       description: `Your order for ${data.quantity} ${data.service} has been placed with ${recommendation?.bestPanel}.`,
@@ -111,6 +166,10 @@ export function OrderForm() {
     form.reset();
     setRecommendation(null);
   };
+
+  if(servicesLoading || panelsLoading) {
+    return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+  }
 
   return (
     <Form {...form}>
@@ -213,7 +272,7 @@ export function OrderForm() {
                 <CardDescription>
                   Let AI find the best panel for your order.
                 </CardDescription>
-              </CardHeader>
+              </Header>
               <CardContent>
                 <FormField
                   control={form.control}

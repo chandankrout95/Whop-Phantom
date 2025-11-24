@@ -1,3 +1,4 @@
+'use client';
 import { OverviewCards } from "@/components/dashboard/overview-cards";
 import { RecentOrders } from "@/components/dashboard/recent-orders";
 

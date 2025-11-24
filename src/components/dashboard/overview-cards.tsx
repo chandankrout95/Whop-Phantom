@@ -1,16 +1,41 @@
-import { panels, orders } from "@/lib/data";
-import { DollarSign, ListOrdered, Server } from "lucide-react";
+'use client';
+import { useMemo } from 'react';
+import { useCollection, useFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
+import type { Panel, Order } from "@/lib/types";
+import { DollarSign, ListOrdered, Server, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from '../ui/skeleton';
 
 export function OverviewCards() {
-  const totalBalance = panels.reduce((sum, panel) => sum + panel.balance, 0);
-  const totalOrders = orders.length;
-  const activePanels = panels.length;
+  const { firestore, user } = useFirebase();
+
+  const panelsRef = useMemo(() => query(collection(firestore, 'smm_panels')), [firestore]);
+  const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
+  
+  const ordersRef = useMemo(() => user ? query(collection(firestore, `users/${user.uid}/orders`)) : null, [firestore, user]);
+  const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
+
+  const totalBalance = useMemo(() => panels?.reduce((sum, panel) => sum + panel.balance, 0), [panels]);
+  const totalOrders = orders?.length ?? 0;
+  const activePanels = panels?.length ?? 0;
+
+  const isLoading = panelsLoading || ordersLoading;
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Skeleton className="h-[126px]" />
+        <Skeleton className="h-[126px]" />
+        <Skeleton className="h-[126px]" />
+      </div>
+    )
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -21,7 +46,7 @@ export function OverviewCards() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            ${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            ${totalBalance?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </div>
           <p className="text-xs text-muted-foreground">
             Across {activePanels} panels

@@ -2,7 +2,7 @@ export type Panel = {
   id: string;
   name: string;
   balance: number;
-  apiEndpoint: string;
+  apiUrl: string;
   apiKey: string;
 };
 
@@ -13,7 +13,7 @@ export type Service = {
   rate: number; // per 1000
   min: number;
   max: number;
-  panelId: string;
+  smmPanelId: string;
   estimatedDeliveryTime: string; // e.g., "24 hours", "1-2 days"
 };
 
@@ -23,9 +23,10 @@ export type Order = {
   link: string;
   quantity: number;
   charge: number;
-  date: string;
+  createdAt: string;
   status: "Pending" | "In Progress" | "Completed" | "Canceled" | "Partial";
   panelId: string;
+  userId: string;
 };
 
 export type NavItem = {

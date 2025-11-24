@@ -1,3 +1,5 @@
+'use client';
+import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -14,10 +16,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { orders, services, panels } from "@/lib/data";
+import type { Order, Service, Panel } from "@/lib/types";
+import { useCollection, useFirebase } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+
 
 export function RecentOrders() {
-  const recentOrders = orders.slice(0, 5);
+  const { firestore, user } = useFirebase();
+
+  const ordersRef = useMemo(() => user ? query(collection(firestore, `users/${user.uid}/orders`), orderBy('createdAt', 'desc'), limit(5)) : null, [firestore, user]);
+  const { data: recentOrders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
+
+  const servicesRef = useMemo(() => collection(firestore, 'smm_panels/panel-1/services'), [firestore]);
+  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesRef);
+
+  const panelsRef = useMemo(() => collection(firestore, 'smm_panels'), [firestore]);
+  const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -34,6 +49,8 @@ export function RecentOrders() {
     }
   };
 
+  const isLoading = ordersLoading || servicesLoading || panelsLoading;
+
   return (
     <Card>
       <CardHeader>
@@ -41,43 +58,49 @@ export function RecentOrders() {
         <CardDescription>A list of your most recent orders.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Service</TableHead>
-              <TableHead className="hidden md:table-cell">Panel</TableHead>
-              <TableHead className="text-right">Charge</TableHead>
-              <TableHead className="text-right">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {recentOrders.map((order) => {
-              const service = services.find((s) => s.id === order.serviceId);
-              const panel = panels.find((p) => p.id === order.panelId);
-              return (
-                <TableRow key={order.id}>
-                  <TableCell>
-                    <div className="font-medium">{service?.name}</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      Qty: {order.quantity}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {panel?.name}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    ${order.charge.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Badge variant={getStatusVariant(order.status)}>
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Service</TableHead>
+                <TableHead className="hidden md:table-cell">Panel</TableHead>
+                <TableHead className="text-right">Charge</TableHead>
+                <TableHead className="text-right">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentOrders?.map((order) => {
+                const service = services?.find((s) => s.id === order.serviceId);
+                const panel = panels?.find((p) => p.id === order.panelId);
+                return (
+                  <TableRow key={order.id}>
+                    <TableCell>
+                      <div className="font-medium">{service?.name}</div>
+                      <div className="hidden text-sm text-muted-foreground md:inline">
+                        Qty: {order.quantity.toLocaleString()}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {panel?.name}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      ${order.charge.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant={getStatusVariant(order.status)}>
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );

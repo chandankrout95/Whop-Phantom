@@ -1,3 +1,6 @@
+'use client';
+
+import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -15,11 +18,25 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { orders, services, panels } from "@/lib/data";
-import { PlusCircle } from "lucide-react";
+import type { Order, Service, Panel } from "@/lib/types";
+import { PlusCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useCollection, useFirebase } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
+
 
 export default function OrdersPage() {
+  const { firestore, user } = useFirebase();
+
+  const ordersRef = useMemo(() => user ? query(collection(firestore, `users/${user.uid}/orders`), orderBy('createdAt', 'desc')) : null, [firestore, user]);
+  const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
+
+  const servicesRef = useMemo(() => collection(firestore, 'smm_panels/panel-1/services'), [firestore]);
+  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesRef);
+
+  const panelsRef = useMemo(() => collection(firestore, 'smm_panels'), [firestore]);
+  const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
+
   const getStatusVariant = (status: string) => {
     switch (status) {
       case "Completed":
@@ -34,6 +51,8 @@ export default function OrdersPage() {
         return "outline";
     }
   };
+
+  const isLoading = ordersLoading || servicesLoading || panelsLoading;
 
   return (
     <div className="flex flex-col gap-8">
@@ -53,6 +72,11 @@ export default function OrdersPage() {
           <CardDescription>A complete list of all your orders.</CardDescription>
         </CardHeader>
         <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -64,9 +88,9 @@ export default function OrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => {
-                const service = services.find((s) => s.id === order.serviceId);
-                const panel = panels.find((p) => p.id === order.panelId);
+              {orders?.map((order) => {
+                const service = services?.find((s) => s.id === order.serviceId);
+                const panel = panels?.find((p) => p.id === order.panelId);
                 return (
                   <TableRow key={order.id}>
                     <TableCell>
@@ -79,7 +103,7 @@ export default function OrdersPage() {
                       {panel?.name}
                     </TableCell>
                      <TableCell className="hidden md:table-cell">
-                      {new Date(order.date).toLocaleDateString()}
+                      {new Date(order.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
                       ${order.charge.toFixed(2)}
@@ -94,6 +118,7 @@ export default function OrdersPage() {
               })}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>

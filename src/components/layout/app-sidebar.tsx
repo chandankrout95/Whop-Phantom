@@ -3,12 +3,13 @@
 import {
   LayoutDashboard,
   ListOrdered,
+  LogOut,
   Package,
   PlusCircle,
   Server,
   Zap,
 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   SidebarContent,
   SidebarFooter,
@@ -22,6 +23,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { NavItem } from '@/lib/types';
 import Link from 'next/link';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 const navItems: NavItem[] = [
   { href: '/dashboard', title: 'Dashboard', icon: LayoutDashboard },
@@ -34,6 +37,14 @@ const navItems: NavItem[] = [
 export function AppSidebar() {
   const pathname = usePathname();
   const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = () => {
+    signOut(auth);
+    router.push('/login');
+  };
+
 
   return (
     <>
@@ -49,7 +60,6 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                href={item.href}
                 isActive={pathname === item.href}
                 tooltip={item.title}
               >
@@ -65,14 +75,20 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarSeparator />
         <SidebarMenu>
+           <SidebarMenuItem>
+              <SidebarMenuButton tooltip="Logout" onClick={handleSignOut}>
+                <LogOut />
+                <span>Logout</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Profile">
               <div className="flex items-center gap-2">
                 <Avatar className="w-8 h-8">
-                  {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User Avatar" />}
-                  <AvatarFallback>U</AvatarFallback>
+                  {userAvatar && <AvatarImage src={auth.currentUser?.photoURL || userAvatar.imageUrl} alt="User Avatar" />}
+                  <AvatarFallback>{auth.currentUser?.email?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span>User Name</span>
+                <span>{auth.currentUser?.displayName || auth.currentUser?.email}</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
