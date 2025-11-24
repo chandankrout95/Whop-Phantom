@@ -1,0 +1,326 @@
+{
+  "entities": {
+    "SMMPanel": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SMMPanel",
+      "type": "object",
+      "description": "Represents an SMM panel that the application connects to.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SMM panel."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the SMM panel."
+        },
+        "apiUrl": {
+          "type": "string",
+          "description": "API endpoint URL of the SMM panel.",
+          "format": "uri"
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "API key for accessing the SMM panel's API.  Treat this as sensitive and handle with care."
+        },
+        "balance": {
+          "type": "number",
+          "description": "Current balance in the SMM panel account."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency of the SMM panel's balance (e.g., USD, EUR)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "apiUrl",
+        "apiKey"
+      ]
+    },
+    "Service": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Service",
+      "type": "object",
+      "description": "Represents a service offered by an SMM panel.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the service."
+        },
+        "smmPanelId": {
+          "type": "string",
+          "description": "Reference to the SMM Panel that offers this service. (Relationship: SMMPanel 1:N Service)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the service (e.g., 'Instagram Followers')."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the service."
+        },
+        "pricePer1000": {
+          "type": "number",
+          "description": "Price per 1000 units of the service."
+        },
+        "minQuantity": {
+          "type": "number",
+          "description": "Minimum order quantity for the service."
+        },
+        "maxQuantity": {
+          "type": "number",
+          "description": "Maximum order quantity for the service."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to the Category this service belongs to. (Relationship: Category 1:N Service)"
+        }
+      },
+      "required": [
+        "id",
+        "smmPanelId",
+        "name",
+        "pricePer1000",
+        "minQuantity",
+        "maxQuantity",
+        "categoryId"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category of services.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category."
+        },
+        "smmPanelId": {
+          "type": "string",
+          "description": "Reference to the SMM Panel that provides this category. (Relationship: SMMPanel 1:N Category)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category (e.g., 'Instagram', 'Facebook')."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the category."
+        }
+      },
+      "required": [
+        "id",
+        "smmPanelId",
+        "name"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents an order placed through the SMM Connector.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order."
+        },
+        "serviceId": {
+          "type": "string",
+          "description": "Reference to the Service that was ordered. (Relationship: Service 1:N Order)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the service ordered."
+        },
+        "link": {
+          "type": "string",
+          "description": "Link associated with the order (e.g., Instagram profile URL)."
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the order (e.g., 'Pending', 'Processing', 'Completed', 'Cancelled')."
+        },
+        "smmPanelOrderId": {
+          "type": "string",
+          "description": "Order ID assigned by the SMM panel."
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Timestamp of when the order was created.",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User that placed the order. (Relationship: User 1:N Order)"
+        }
+      },
+      "required": [
+        "id",
+        "serviceId",
+        "quantity",
+        "link",
+        "status",
+        "created_at",
+        "userId"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the SMM Connector application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "Username of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "balance": {
+          "type": "number",
+          "description": "User's account balance within the SMM Connector application."
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Timestamp of when the user was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "created_at"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/smm_panels/{smmPanelId}",
+        "definition": {
+          "entityName": "SMMPanel",
+          "schema": {
+            "$ref": "#/backend/entities/SMMPanel"
+          },
+          "description": "Stores details of SMM panels.  Admin role is managed via the `/roles_admin/{userId}` collection.",
+          "params": [
+            {
+              "name": "smmPanelId",
+              "description": "Unique identifier for the SMM panel."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/smm_panels/{smmPanelId}/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores categories for each SMM panel. Includes denormalized admin role information for authorization independence.",
+          "params": [
+            {
+              "name": "smmPanelId",
+              "description": "Unique identifier for the SMM panel."
+            },
+            {
+              "name": "categoryId",
+              "description": "Unique identifier for the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/smm_panels/{smmPanelId}/services/{serviceId}",
+        "definition": {
+          "entityName": "Service",
+          "schema": {
+            "$ref": "#/backend/entities/Service"
+          },
+          "description": "Stores services offered by each SMM panel. Includes denormalized admin role information for authorization independence.",
+          "params": [
+            {
+              "name": "smmPanelId",
+              "description": "Unique identifier for the SMM panel."
+            },
+            {
+              "name": "serviceId",
+              "description": "Unique identifier for the service."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Users can only access their own profile data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores orders placed by users. Path-based ownership ensures that users can only access their own orders.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "orderId",
+              "description": "Unique identifier for the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Used for admin role management. Existence in this collection grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the SMM Connector application, focusing on secure access, scalability, and maintainability. The structure leverages denormalization to ensure Authorization Independence, enabling efficient and secure data access without relying on hierarchical `get()` calls in security rules. It will also use segregation for list operations. I'm assuming that the app will have admin users who manages the SMM panels.\n\n*   **/smm_panels/{smmPanelId}**: Stores details of connected SMM panels. Only admins can create, update, or delete SMM panels.\n*   **/smm_panels/{smmPanelId}/categories/{categoryId}**: Stores categories for each SMM panel.  Authorization attributes are denormalized from `smm_panels` (specifically the admin role) into each category document to ensure Authorization Independence.\n*   **/smm_panels/{smmPanelId}/services/{serviceId}**: Stores services offered by each SMM panel. Authorization attributes are denormalized from `smm_panels` (specifically the admin role) into each service document to ensure Authorization Independence.\n*   **/users/{userId}**: Stores user profiles.  Users can only access their own profile data. This enables path-based ownership.\n*   **/users/{userId}/orders/{orderId}**: Stores orders placed by users. Path-based ownership ensures that users can only access their own orders.\n*   **/roles_admin/{userId}**: Used for admin role management. Existence in this collection grants admin privileges.\n\nThis structure facilitates simple and robust security rules, enabling secure `list` operations and atomic operations (transactions/batches)."
+  }
+}
