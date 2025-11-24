@@ -58,10 +58,16 @@ export function OrderForm() {
   const { toast } = useToast();
   const { firestore, user } = useFirebase();
 
-  const servicesQuery = useMemoFirebase(() => user && firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore, user]);
+  const servicesQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collectionGroup(firestore, 'services'));
+  }, [firestore, user]);
   const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
 
-  const panelsRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'smm_panels') : null, [firestore, user]);
+  const panelsRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'smm_panels');
+  }, [firestore, user]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
 
