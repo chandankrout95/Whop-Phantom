@@ -36,7 +36,7 @@ import { Loader2, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Service, Panel } from "@/lib/types";
-import { useCollection, addDocumentNonBlocking, useFirebase, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
 import { collection, collectionGroup, query } from "firebase/firestore";
 
 const orderFormSchema = z.object({
