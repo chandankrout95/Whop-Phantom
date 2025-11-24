@@ -31,10 +31,10 @@ export default function OrdersPage() {
   const ordersRef = useMemoFirebase(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`), orderBy('createdAt', 'desc')) : null, [firestore, user]);
   const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
 
-  const servicesQuery = useMemoFirebase(() => user && firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore, user]);
+  const servicesQuery = useMemoFirebase(() => firestore && user ? query(collectionGroup(firestore, 'services')) : null, [firestore, user]);
   const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
 
-  const panelsRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'smm_panels') : null, [firestore, user]);
+  const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const getStatusVariant = (status: string) => {
