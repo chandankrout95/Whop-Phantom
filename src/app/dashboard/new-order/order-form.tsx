@@ -87,10 +87,10 @@ export function OrderForm() {
     if (!services || !selectedCategory) return [];
     return services.filter((s) => s.category === selectedCategory);
   }, [services, selectedCategory]);
-
+  
   const uniqueServiceNames = useMemo(() => {
-    if (!availableServices) return [];
-    return [...new Set(availableServices.map((s) => s.name))];
+      if (!availableServices) return [];
+      return [...new Set(availableServices.map((s) => s.name))];
   }, [availableServices]);
 
   const handleFindPanel = async () => {
