@@ -36,7 +36,7 @@ import { Loader2, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Service, Panel } from "@/lib/types";
-import { useCollection, useFirebase, addDocumentNonBlocking, useMemoFirebase } from "@/firebase";
+import { useCollection, addDocumentNonBlocking, useFirebase, useMemoFirebase } from "@/firebase";
 import { collection, collectionGroup, query } from "firebase/firestore";
 
 const orderFormSchema = z.object({
@@ -86,11 +86,11 @@ export function OrderForm() {
   const availableServices = useMemo(() => {
     if (!services || !selectedCategory) return [];
     return services.filter((s) => s.category === selectedCategory);
-  }, [selectedCategory, services]);
+  }, [services, selectedCategory]);
 
   const uniqueServiceNames = useMemo(() => {
-    if(!availableServices) return [];
-    return [...new Set(availableServices.map(s => s.name))];
+    if (!availableServices) return [];
+    return [...new Set(availableServices.map((s) => s.name))];
   }, [availableServices]);
 
   const handleFindPanel = async () => {
