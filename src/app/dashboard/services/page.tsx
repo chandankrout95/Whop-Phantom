@@ -17,16 +17,16 @@ import {
 } from "@/components/ui/table";
 import type { Service, Panel } from '@/lib/types';
 import { useCollection, useFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, collectionGroup, query } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 export default function ServicesPage() {
   const { firestore } = useFirebase();
 
-  const servicesRef = useMemo(() => collection(firestore, 'smm_panels/panel-1/services'), [firestore]);
-  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesRef);
+  const servicesQuery = useMemo(() => firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore]);
+  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
 
-  const panelsRef = useMemo(() => collection(firestore, 'smm_panels'), [firestore]);
+  const panelsRef = useMemo(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const isLoading = servicesLoading || panelsLoading;

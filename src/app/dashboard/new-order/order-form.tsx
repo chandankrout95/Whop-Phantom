@@ -36,8 +36,8 @@ import { Loader2, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Service, Panel } from "@/lib/types";
-import { useCollection, useFirebase, addDocumentNonBlocking } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { useCollection, useFirebase, addDocumentNonBlocking, useMemoFirebase } from "@/firebase";
+import { collection, collectionGroup, query } from "firebase/firestore";
 
 const orderFormSchema = z.object({
   category: z.string().min(1, "Please select a category."),
@@ -58,19 +58,12 @@ export function OrderForm() {
   const { toast } = useToast();
   const { firestore, user } = useFirebase();
 
-  const servicesRef = useMemo(() => collection(firestore, 'smm_panels/panel-1/services')
-    .withConverter({
-      toFirestore: (data: Service) => data,
-      fromFirestore: (snap) => snap.data() as Service
-    }), [firestore]);
-  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesRef);
+  const servicesQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore]);
+  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
 
-  const panelsRef = useMemo(() => collection(firestore, 'smm_panels')
-    .withConverter({
-        toFirestore: (data: Panel) => data,
-        fromFirestore: (snap) => snap.data() as Panel
-    }), [firestore]);
+  const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
+
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
@@ -85,7 +78,7 @@ export function OrderForm() {
 
   const selectedCategory = form.watch("category");
 
-  const uniqueCategories = useMemo(() => services ? [...new Set(services.map((s) => s.category))] : [], [services]);
+  const uniqueCategories = useMemo(() => (services ? [...new Set(services.map((s) => s.category))] : []), [services]);
   const availableServices = useMemo(() => services?.filter((s) => s.category === selectedCategory) || [], [selectedCategory, services]);
   const uniqueServiceNames = useMemo(() => [...new Set(availableServices.map(s => s.name))], [availableServices]);
 
@@ -114,8 +107,6 @@ export function OrderForm() {
 
     setIsLoading(true);
     try {
-       const offeringServices = services.filter(s => s.name === service);
-       const offeringPanel = panels.find(p => p.name === offeringServices[0].smmPanelId)
       const result = await getRoutingRecommendation({
         serviceName: service,
         quantity: quantity,
@@ -143,7 +134,7 @@ export function OrderForm() {
   };
 
   const onSubmit = (data: OrderFormValues) => {
-    if (!recommendation || !user) return;
+    if (!recommendation || !user || !firestore) return;
 
     const orderData = {
         userId: user.uid,
