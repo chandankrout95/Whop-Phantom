@@ -78,9 +78,20 @@ export function OrderForm() {
 
   const selectedCategory = form.watch("category");
 
-  const uniqueCategories = useMemo(() => (services ? [...new Set(services.map((s) => s.category))] : []), [services]);
-  const availableServices = useMemo(() => services?.filter((s) => s.category === selectedCategory) || [], [selectedCategory, services]);
-  const uniqueServiceNames = useMemo(() => [...new Set(availableServices.map(s => s.name))], [availableServices]);
+  const uniqueCategories = useMemo(() => {
+    if (!services) return [];
+    return [...new Set(services.map((s) => s.category))];
+  }, [services]);
+
+  const availableServices = useMemo(() => {
+    if (!services || !selectedCategory) return [];
+    return services.filter((s) => s.category === selectedCategory);
+  }, [selectedCategory, services]);
+
+  const uniqueServiceNames = useMemo(() => {
+    if(!availableServices) return [];
+    return [...new Set(availableServices.map(s => s.name))];
+  }, [availableServices]);
 
   const handleFindPanel = async () => {
     setError(null);

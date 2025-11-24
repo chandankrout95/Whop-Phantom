@@ -20,7 +20,6 @@ import {
   SidebarSeparator,
 } from '../ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { NavItem } from '@/lib/types';
 import Link from 'next/link';
 import { useAuth } from '@/firebase';
@@ -36,7 +35,6 @@ const navItems: NavItem[] = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
   const auth = useAuth();
   const router = useRouter();
 
@@ -85,7 +83,7 @@ export function AppSidebar() {
             <SidebarMenuButton tooltip="Profile">
               <div className="flex items-center gap-2">
                 <Avatar className="w-8 h-8">
-                  {userAvatar && <AvatarImage src={auth.currentUser?.photoURL || userAvatar.imageUrl} alt="User Avatar" />}
+                  {auth.currentUser?.photoURL && <AvatarImage src={auth.currentUser?.photoURL} alt="User Avatar" />}
                   <AvatarFallback>{auth.currentUser?.email?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <span>{auth.currentUser?.displayName || auth.currentUser?.email}</span>
