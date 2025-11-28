@@ -17,13 +17,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Terminal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from '@/lib/utils';
 
 
 const phantomFormSchema = z.object({
@@ -45,6 +39,17 @@ const phantomFormSchema = z.object({
 
 type PhantomFormValues = z.infer<typeof phantomFormSchema>;
 
+const timeIntervals = [
+    { value: '1', label: '1 min', subLabel: 'Test' },
+    { value: '5', label: '5 min', subLabel: 'Fast' },
+    { value: '8', label: '8 min', subLabel: 'Quick' },
+    { value: '11', label: '11 min', subLabel: 'Default' },
+    { value: '15', label: '15 min', subLabel: 'Safe' },
+    { value: '20', label: '20 min', subLabel: 'Slow' },
+    { value: '30', label: '30 min', subLabel: 'Very Safe' },
+    { value: '60', label: '60 min', subLabel: 'Maximum' },
+];
+
 export function WhopPhantomForm() {
   const { toast } = useToast();
   
@@ -57,7 +62,7 @@ export function WhopPhantomForm() {
       variant: 'standard',
       quantityFrom: 0,
       quantityTo: 0,
-      timeInterval: undefined,
+      timeInterval: "11",
     },
   });
 
@@ -191,26 +196,30 @@ export function WhopPhantomForm() {
                   control={form.control}
                   name="timeInterval"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="space-y-3">
                       <FormLabel>Time Interval</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a time interval" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1">1 min</SelectItem>
-                          <SelectItem value="5">5 min</SelectItem>
-                          <SelectItem value="11">11 min</SelectItem>
-                          <SelectItem value="15">15 min</SelectItem>
-                          <SelectItem value="20">20 min</SelectItem>
-                          <SelectItem value="30">30 min</SelectItem>
-                          <SelectItem value="60">60 min</SelectItem>
-                          <SelectItem value="120">120 min</SelectItem>
-                          <SelectItem value="200">200 min</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                        >
+                          {timeIntervals.map((interval) => (
+                            <FormItem key={interval.value} className="flex items-center">
+                              <FormControl>
+                                <RadioGroupItem value={interval.value} className="sr-only" />
+                              </FormControl>
+                              <FormLabel className={cn(
+                                "flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 font-normal hover:bg-accent hover:text-accent-foreground w-full",
+                                field.value === interval.value && "border-primary"
+                              )}>
+                                <span className="font-bold text-lg">{interval.label}</span>
+                                <span className="text-xs text-muted-foreground">{interval.subLabel}</span>
+                              </FormLabel>
+                            </FormItem>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
