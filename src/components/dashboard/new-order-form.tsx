@@ -25,7 +25,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const formSchema = z.object({
-  platform: z.enum(['youtube', 'tiktok', 'instagram', 'twitter-x']),
+  platform: z.enum(['youtube', 'tiktok', 'instagram', 'twitter-x']).optional(),
 });
 
 export function NewOrderForm() {
@@ -38,9 +38,9 @@ export function NewOrderForm() {
   }
 
   return (
-    <Card>
+    <Card className="bg-black/50 border-green-700/50 shadow-[0_0_20px_rgba(0,255,0,0.2)] backdrop-blur-sm">
       <CardHeader>
-        <CardTitle>Create a New Order</CardTitle>
+        <CardTitle className="text-primary">New Order</CardTitle>
         <CardDescription>Select a platform to begin.</CardDescription>
       </CardHeader>
       <CardContent>
