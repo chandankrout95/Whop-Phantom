@@ -71,6 +71,7 @@ export function WhopPhantomForm() {
     toast({
         title: "Task Initiated",
         description: `Botting campaign "${data.campaignName}" has started.`,
+        variant: 'default'
     });
     form.reset();
   };
