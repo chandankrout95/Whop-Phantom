@@ -53,9 +53,10 @@ export function WhopPhantomForm() {
     defaultValues: {
       campaignName: '',
       videoLink: '',
-      totalViews: undefined,
-      quantityFrom: undefined,
-      quantityTo: undefined,
+      totalViews: 0,
+      variant: 'standard',
+      quantityFrom: 0,
+      quantityTo: 0,
       timeInterval: undefined,
     },
   });
@@ -70,7 +71,7 @@ export function WhopPhantomForm() {
   };
 
   return (
-    <div className="w-full max-w-lg rounded-lg border border-green-700/50 bg-black/50 p-3 shadow-[0_0_20px_rgba(0,255,0,0.2)] backdrop-blur-sm">
+    <div className="w-full rounded-lg border border-green-700/50 bg-black/50 p-3 shadow-[0_0_20px_rgba(0,255,0,0.2)] backdrop-blur-sm">
         <div className="flex items-center justify-between border-b border-green-700/50 pb-2 mb-4">
             <div className="flex items-center gap-2">
                 <Terminal className="h-5 w-5 text-primary" />
