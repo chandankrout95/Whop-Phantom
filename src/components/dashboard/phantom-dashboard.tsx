@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -9,9 +10,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  AreaChart,
+  Area,
 } from 'recharts';
 import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789{}[]();:<>/?|';
 const generateRandomString = (length: number) => {
@@ -110,28 +113,50 @@ export function PhantomDashboard() {
             </div>
 
             {/* Right Panel: Chart */}
-            <Card className="bg-black/50 border-primary/20 p-4 flex flex-col relative">
-                <div className="absolute inset-0 bg-black/50 z-10 flex flex-col items-center justify-center p-4 text-center">
-                    <p className="text-sm">Sensor: Scanned for Whop ID</p>
-                    <p className="text-2xl font-bold mt-2 text-green-400 shadow-[0_0_10px_#22c55e]">SAFE FOR NEXT ORDER</p>
+            <Card className="bg-black/50 border-primary/20 p-4 flex flex-col">
+                <div className='flex justify-between items-start'>
+                    <div>
+                        <p className="text-sm text-primary/70">&gt; Live View Rate</p>
+                        <p className="text-xs text-muted-foreground">Sensor: Scanned for Whop ID</p>
+                    </div>
+                    <p className="text-lg font-bold text-green-400 shadow-[0_0_10px_#22c55e]">SAFE</p>
                 </div>
-                <p className="text-sm text-primary/70 pb-2">&gt; Live View Rate</p>
-                <div className="flex-grow w-full opacity-30">
+                <div className="flex-grow w-full mt-4">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--primary) / 0.2)" />
-                            <XAxis dataKey="name" stroke="hsl(var(--primary))" fontSize={12} tickLine={false} axisLine={false}/>
-                            <YAxis stroke="hsl(var(--primary))" fontSize={12} tickLine={false} axisLine={false} />
+                        <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                             <defs>
+                                <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--primary) / 0.1)" />
+                            <XAxis dataKey="name" stroke="hsl(var(--primary) / 0.5)" fontSize={10} tickLine={false} axisLine={false}/>
+                            <YAxis stroke="hsl(var(--primary) / 0.5)" fontSize={10} tickLine={false} axisLine={false} />
                             <Tooltip
                                 contentStyle={{
-                                    backgroundColor: 'hsl(var(--background))',
+                                    backgroundColor: 'hsl(var(--background) / 0.8)',
                                     borderColor: 'hsl(var(--primary) / 0.5)',
                                     color: 'hsl(var(--foreground))',
-                                    fontFamily: 'monospace'
+                                    fontFamily: 'monospace',
+                                    fontSize: '12px'
+                                }}
+                                cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '3 3' }}
+                            />
+                            <Area 
+                                type="monotone" 
+                                dataKey="views" 
+                                stroke="hsl(var(--primary))" 
+                                strokeWidth={2} 
+                                fill="url(#colorViews)" 
+                                fillOpacity={1}
+                                dot={false}
+                                activeDot={{ r: 4, style: { stroke: 'hsl(var(--primary))', fill: 'hsl(var(--background))' } }}
+                                style={{
+                                    filter: 'drop-shadow(0 0 5px hsl(var(--primary)))'
                                 }}
                             />
-                            <Line type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                        </LineChart>
+                        </AreaChart>
                     </ResponsiveContainer>
                 </div>
             </Card>
