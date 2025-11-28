@@ -43,7 +43,7 @@ export function LoginForm() {
     setError(null);
     try {
       await login(data.email, data.password);
-      // The redirect is handled by the page component now
+      // The redirect is handled by the auth hook
     } catch (e: any) {
       setError(e.message);
       setIsLoading(false);
@@ -54,7 +54,7 @@ export function LoginForm() {
     setIsLoading(true);
     setError(null);
     try {
-        await login('guest@example.com', 'password');
+        await login('guest@system.local', 'password');
     } catch (e: any) {
         setError(e.message);
         setIsLoading(false);
@@ -66,7 +66,7 @@ export function LoginForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {error && (
             <Alert variant="destructive">
-                <AlertTitle>Login Failed</AlertTitle>
+                <AlertTitle>Access Denied</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
             </Alert>
         )}
@@ -75,9 +75,9 @@ export function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email address</FormLabel>
+              <FormLabel>User Identifier</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="you@example.com" {...field} />
+                <Input type="email" placeholder="user@domain.tld" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -88,7 +88,7 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Auth Token</FormLabel>
               <FormControl>
                 <Input type="password" {...field} />
               </FormControl>
@@ -99,7 +99,7 @@ export function LoginForm() {
         <div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign in
+            Authenticate
           </Button>
         </div>
         <div className="relative">
@@ -107,15 +107,15 @@ export function LoginForm() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or continue with
+            <span className="bg-black px-2 text-muted-foreground">
+              Or
             </span>
           </div>
         </div>
         <div>
-            <Button variant="secondary" className="w-full" onClick={handleAnonymousLogin} disabled={isLoading}>
+            <Button variant="secondary" className="w-full" onClick={handleAnonymousLogin} disabled={isLoading} type="button">
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Anonymous Sign In
+                Guest Access
             </Button>
         </div>
       </form>
