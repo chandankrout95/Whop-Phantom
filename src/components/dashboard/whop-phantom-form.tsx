@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Terminal } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 
 const phantomFormSchema = z.object({
@@ -41,6 +41,10 @@ export function WhopPhantomForm() {
     defaultValues: {
       campaignName: '',
       videoLink: '',
+      totalViews: undefined,
+      quantityFrom: undefined,
+      quantityTo: undefined,
+      timeInterval: undefined,
     },
   });
 
