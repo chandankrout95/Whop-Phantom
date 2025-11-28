@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -16,6 +17,13 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Terminal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 
 const phantomFormSchema = z.object({
@@ -27,7 +35,9 @@ const phantomFormSchema = z.object({
   }),
   quantityFrom: z.coerce.number().min(1, 'Quantity must be at least 1.'),
   quantityTo: z.coerce.number().min(1, 'Quantity must be at least 1.'),
-  timeInterval: z.coerce.number().min(1, 'Time interval must be at least 1.'),
+  timeInterval: z.string({
+    required_error: "Please select a time interval.",
+  }),
 }).refine(data => data.quantityTo >= data.quantityFrom, {
     message: '"To" quantity must be greater than or equal to "From" quantity.',
     path: ['quantityTo'],
@@ -36,6 +46,8 @@ const phantomFormSchema = z.object({
 type PhantomFormValues = z.infer<typeof phantomFormSchema>;
 
 export function WhopPhantomForm() {
+  const { toast } = useToast();
+  
   const form = useForm<PhantomFormValues>({
     resolver: zodResolver(phantomFormSchema),
     defaultValues: {
@@ -175,18 +187,34 @@ export function WhopPhantomForm() {
                 </div>
 
                 <FormField
-                    control={form.control}
-                    name="timeInterval"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Time Interval (minutes)</FormLabel>
+                  control={form.control}
+                  name="timeInterval"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time Interval</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                            <Input type="number" placeholder="60" {...field} />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a time interval" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                        <SelectContent>
+                          <SelectItem value="1">1 min</SelectItem>
+                          <SelectItem value="5">5 min</SelectItem>
+                          <SelectItem value="11">11 min</SelectItem>
+                          <SelectItem value="15">15 min</SelectItem>
+                          <SelectItem value="20">20 min</SelectItem>
+                          <SelectItem value="30">30 min</SelectItem>
+                          <SelectItem value="60">60 min</SelectItem>
+                          <SelectItem value="120">120 min</SelectItem>
+                          <SelectItem value="200">200 min</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
+
 
                 <Button type="submit" className="w-full !mt-6">
                     Start Botting
