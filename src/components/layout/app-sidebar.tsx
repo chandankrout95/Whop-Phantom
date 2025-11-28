@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   ListOrdered,
   LogOut,
+  PanelLeftClose,
   Package,
   PlusCircle,
   Server,
@@ -19,6 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from '../ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import type { NavItem } from '@/lib/types';
@@ -37,6 +39,7 @@ const navItems: NavItem[] = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { setOpen } = useSidebar();
   const router = useRouter();
 
   const handleSignOut = () => {
@@ -74,6 +77,12 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarSeparator />
         <SidebarMenu>
+           <SidebarMenuItem>
+              <SidebarMenuButton tooltip="Close Navigation" onClick={() => setOpen(false)}>
+                <PanelLeftClose />
+                <span>Close Navigation</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
            <SidebarMenuItem>
               <SidebarMenuButton tooltip="Logout" onClick={handleSignOut}>
                 <LogOut />
