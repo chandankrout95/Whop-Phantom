@@ -22,6 +22,7 @@ import { useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { CampaignHistory } from './campaign-history';
 import { Label } from '@/components/ui/label';
+import type { Order } from '@/lib/types';
 
 
 const phantomFormSchema = z.object({
@@ -57,6 +58,7 @@ const timeIntervals = [
 export function WhopPhantomForm() {
   const { toast } = useToast();
   const [view, setView] = useState<'form' | 'history'>('form');
+  const [campaigns, setCampaigns] = useState<Order[]>([]);
 
   const form = useForm<PhantomFormValues>({
     resolver: zodResolver(phantomFormSchema),
@@ -72,7 +74,23 @@ export function WhopPhantomForm() {
   });
 
   const onSubmit = (data: PhantomFormValues) => {
-    console.log('Botting task started:', data);
+    const newCampaign: Order = {
+        id: `order-${Date.now()}`,
+        link: data.videoLink,
+        quantity: data.totalViews,
+        status: 'In Progress',
+        createdAt: new Date().toISOString(),
+        // Mocking other required fields for now
+        serviceId: 'svc-phantom',
+        charge: 0,
+        panelId: 'panel-phantom',
+        userId: 'local-user-123',
+        antiCheatStatus: 'MONITORING',
+        flagged: false,
+    };
+
+    setCampaigns(prev => [newCampaign, ...prev]);
+
     toast({
         title: "Task Initiated",
         description: `Botting campaign "${data.campaignName}" has started.`,
@@ -249,7 +267,7 @@ export function WhopPhantomForm() {
                 </form>
                 </Form>
             ) : (
-                <CampaignHistory />
+                <CampaignHistory campaigns={campaigns} />
             )}
         </div>
     </div>

@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { Order } from "@/lib/types";
-import { mockOrders } from '@/lib/mock-data';
 import { useEffect, useState } from "react";
 import { Progress } from "../ui/progress";
 import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
@@ -78,8 +77,8 @@ const CampaignRow = ({ campaign }: { campaign: Order }) => {
     return (
         <TableRow>
             <TableCell>
-                <div className="font-medium">Campaign {campaign.id.slice(-3)}</div>
-                <div className="text-xs text-muted-foreground">{campaign.link}</div>
+                <div className="font-medium">Campaign {campaign.id.slice(-6)}</div>
+                <div className="text-xs text-muted-foreground truncate max-w-[150px]">{campaign.link}</div>
             </TableCell>
             <TableCell className="text-center">{campaign.quantity.toLocaleString()}</TableCell>
             <TableCell>
@@ -113,8 +112,7 @@ const CampaignRow = ({ campaign }: { campaign: Order }) => {
 }
 
 
-export function CampaignHistory() {
-  const campaigns: Order[] = mockOrders.slice(0, 4); 
+export function CampaignHistory({ campaigns }: { campaigns: Order[] }) {
 
   return (
     <Card className="bg-background/80 backdrop-blur-sm border-border/50">
@@ -123,6 +121,7 @@ export function CampaignHistory() {
         <CardDescription>A log of your recent botting campaigns.</CardDescription>
       </CardHeader>
       <CardContent>
+        {campaigns.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -141,6 +140,12 @@ export function CampaignHistory() {
               ))}
             </TableBody>
           </Table>
+        ) : (
+            <div className="flex flex-col items-center justify-center h-48 gap-2 text-center">
+                <p className="text-lg font-semibold text-foreground">No Campaigns Yet</p>
+                <p className="text-sm text-muted-foreground">Start a new botting task to see its history here.</p>
+            </div>
+        )}
       </CardContent>
     </Card>
   );
