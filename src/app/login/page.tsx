@@ -46,15 +46,6 @@ export default function LoginPage() {
               <h2 className="mt-4 text-center text-xl font-bold tracking-tight text-foreground">
                 Secure Access Required
               </h2>
-              <p className="mt-2 text-center text-xs text-muted-foreground">
-                Or{' '}
-                <a
-                  href="/signup"
-                  className="font-medium text-primary hover:text-primary/90"
-                >
-                  initiate new user sequence
-                </a>
-              </p>
             </div>
             <div className="p-4">
                 <LoginForm />

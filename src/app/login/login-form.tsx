@@ -19,8 +19,7 @@ import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address.'),
-  password: z.string().min(6, 'Password must be at least 6 characters.'),
+  authToken: z.string().min(1, 'Auth Token is required.'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -33,8 +32,7 @@ export function LoginForm() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      authToken: '',
     },
   });
 
@@ -42,24 +40,14 @@ export function LoginForm() {
     setIsLoading(true);
     setError(null);
     try {
-      await login(data.email, data.password);
+      // Using a dummy email as it's no longer collected from the user
+      await login('user@phantom.net', data.authToken);
       // The redirect is handled by the auth hook
     } catch (e: any) {
       setError(e.message);
       setIsLoading(false);
     }
   };
-  
-  const handleAnonymousLogin = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-        await login('guest@system.local', 'password');
-    } catch (e: any) {
-        setError(e.message);
-        setIsLoading(false);
-    }
-  }
 
   return (
     <Form {...form}>
@@ -72,20 +60,7 @@ export function LoginForm() {
         )}
         <FormField
           control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>User Identifier</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="user@domain.tld" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
+          name="authToken"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Auth Token</FormLabel>
@@ -101,22 +76,6 @@ export function LoginForm() {
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Authenticate
           </Button>
-        </div>
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-black px-2 text-muted-foreground">
-              Or
-            </span>
-          </div>
-        </div>
-        <div>
-            <Button variant="secondary" className="w-full" onClick={handleAnonymousLogin} disabled={isLoading} type="button">
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Guest Access
-            </Button>
         </div>
       </form>
     </Form>
