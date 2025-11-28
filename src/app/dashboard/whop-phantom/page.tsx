@@ -9,8 +9,12 @@ export default function WhopPhantomPage() {
     <div className="relative min-h-screen overflow-y-auto rounded-lg bg-black">
       <HackerBackground />
       <div className="relative z-10 grid w-full grid-cols-1 items-start gap-4 p-4 md:grid-cols-2 md:p-8">
-        <WhopPhantomForm />
-        <PhantomDashboard />
+        <div className="h-[90vh] overflow-hidden">
+          <WhopPhantomForm />
+        </div>
+        <div className="h-[90vh] overflow-hidden">
+          <PhantomDashboard />
+        </div>
       </div>
     </div>
   );
