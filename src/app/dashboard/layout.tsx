@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { AuthProvider } from '@/hooks/use-auth';
+import { NewOrderForm } from '@/components/dashboard/new-order-form';
 
 function DashboardRootLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -39,7 +40,10 @@ function DashboardRootLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-            <SidebarTrigger />
+            <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                <NewOrderForm />
+            </div>
             <div className="flex-1 text-center">
                 <h1 className="text-xl font-bold tracking-tight text-primary animate-flicker-glitch" style={{ textShadow: '0 0 10px hsl(var(--primary))' }}>
                     Whop Phantom
