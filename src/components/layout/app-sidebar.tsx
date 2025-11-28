@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Ghost,
   LayoutDashboard,
   ListOrdered,
   LogOut,
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { href: '/dashboard/orders', title: 'Orders', icon: ListOrdered },
   { href: '/dashboard/services', title: 'Services', icon: Package },
   { href: '/dashboard/panels', title: 'Panels', icon: Server },
+  { href: '/dashboard/whop-phantom', title: 'Whop Phantom', icon: Ghost },
 ];
 
 export function AppSidebar() {
