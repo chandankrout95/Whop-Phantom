@@ -19,32 +19,101 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Order } from "@/lib/types";
 import { mockOrders } from '@/lib/mock-data';
+import { useEffect, useState } from "react";
+import { Progress } from "../ui/progress";
+import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+
+const AntiCheatIcon = ({ status }: { status: string }) => {
+    switch (status) {
+        case 'SAFE':
+            return <ShieldCheck className="h-5 w-5 text-green-500" />;
+        case 'MONITORING':
+            return <Shield className="h-5 w-5 text-yellow-500 animate-pulse" />;
+        case 'DETECTED':
+            return <ShieldAlert className="h-5 w-5 text-red-500 animate-pulse" />;
+        default:
+            return <Shield className="h-5 w-5 text-gray-500" />;
+    }
+}
+
+const CampaignRow = ({ campaign }: { campaign: Order }) => {
+    const [delivered, setDelivered] = useState(0);
+    const [countdown, setCountdown] = useState(30);
+
+    const completionPercentage = (delivered / campaign.quantity) * 100;
+
+    useEffect(() => {
+        const deliveredInterval = setInterval(() => {
+            if (campaign.status === 'Completed') {
+                setDelivered(campaign.quantity);
+                clearInterval(deliveredInterval);
+                return;
+            }
+             if (campaign.status !== 'In Progress') {
+                clearInterval(deliveredInterval);
+                return;
+            }
+            setDelivered(d => {
+                const next = d + Math.floor(Math.random() * (campaign.quantity/20));
+                return next > campaign.quantity ? campaign.quantity : next;
+            });
+        }, 1000 + Math.random() * 1000);
+
+        return () => clearInterval(deliveredInterval);
+    }, [campaign.quantity, campaign.status]);
+
+     useEffect(() => {
+        const countdownInterval = setInterval(() => {
+            if (campaign.status !== 'In Progress') {
+                clearInterval(countdownInterval);
+                return;
+            }
+            setCountdown(c => (c > 0 ? c - 1 : Math.floor(Math.random() * 30) + 30));
+        }, 1000);
+        return () => clearInterval(countdownInterval);
+    }, [campaign.status]);
+
+
+    return (
+        <TableRow>
+            <TableCell>
+                <div className="font-medium">Campaign {campaign.id.slice(-3)}</div>
+                <div className="text-xs text-muted-foreground">{campaign.link}</div>
+            </TableCell>
+            <TableCell className="text-center">{campaign.quantity.toLocaleString()}</TableCell>
+            <TableCell>
+                <div className="flex flex-col gap-1 items-center">
+                    <span>{delivered.toLocaleString()}</span>
+                    <Progress value={completionPercentage} className="h-1 w-24" />
+                </div>
+            </TableCell>
+            <TableCell className="text-center">
+                {campaign.status === 'In Progress' ? `${countdown}s` : '--'}
+            </TableCell>
+            <TableCell className="text-center">
+                <Badge variant={campaign.status === 'Completed' ? 'default' : campaign.status === 'In Progress' ? 'secondary' : 'destructive'}>
+                    {campaign.status}
+                </Badge>
+            </TableCell>
+            <TableCell className="text-center">
+                <div className="flex items-center justify-center gap-2">
+                    <AntiCheatIcon status={campaign.antiCheatStatus || 'SAFE'} />
+                    <span>{campaign.antiCheatStatus || 'SAFE'}</span>
+                </div>
+            </TableCell>
+            <TableCell className="text-center">
+                <span className={cn(
+                    "inline-block h-3 w-3 rounded-full animate-pulse",
+                    campaign.flagged ? 'bg-red-500 shadow-[0_0_8px_red]' : 'bg-green-500 shadow-[0_0_8px_green]'
+                )}></span>
+            </TableCell>
+        </TableRow>
+    );
+}
+
 
 export function CampaignHistory() {
-  const campaigns: Order[] = mockOrders.slice(0, 3); // Using mock orders as campaign data
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return "default";
-      case "In Progress":
-        return "secondary";
-      case "Pending":
-        return "outline";
-      case "Canceled":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
-  
-  const formatDate = (dateValue: any) => {
-    if (!dateValue) return '';
-    if (typeof dateValue === 'string') {
-        return new Date(dateValue).toLocaleDateString();
-    }
-    return new Date(dateValue).toLocaleDateString();
-  }
+  const campaigns: Order[] = mockOrders.slice(0, 4); 
 
   return (
     <Card className="bg-background/80 backdrop-blur-sm border-border/50">
@@ -57,33 +126,18 @@ export function CampaignHistory() {
             <TableHeader>
               <TableRow>
                 <TableHead>Campaign</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Views</TableHead>
-                <TableHead className="text-right">Status</TableHead>
+                <TableHead className="text-center">Total Views</TableHead>
+                <TableHead className="text-center">Views Delivered</TableHead>
+                <TableHead className="text-center">Next Order</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Anti-Cheat</TableHead>
+                <TableHead className="text-center">Flagged</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {campaigns?.map((campaign) => (
-                  <TableRow key={campaign.id}>
-                    <TableCell>
-                      <div className="font-medium">Campaign {campaign.id.slice(-3)}</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        {campaign.link}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {formatDate(campaign.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {campaign.quantity.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant={getStatusVariant(campaign.status)}>
-                        {campaign.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                  <CampaignRow key={campaign.id} campaign={campaign} />
+              ))}
             </TableBody>
           </Table>
       </CardContent>

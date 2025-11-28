@@ -1,4 +1,5 @@
 import { FieldValue } from "firebase/firestore";
+import { cn } from "./utils";
 
 export type Panel = {
   id: string;
@@ -29,6 +30,8 @@ export type Order = {
   status: "Pending" | "In Progress" | "Completed" | "Canceled" | "Partial";
   panelId: string;
   userId: string;
+  antiCheatStatus?: 'SAFE' | 'MONITORING' | 'DETECTED';
+  flagged?: boolean;
 };
 
 export type NavItem = {

@@ -122,7 +122,9 @@ export const mockOrders: Order[] = [
       createdAt: "2023-10-26T10:00:00Z",
       status: "Completed",
       panelId: "panel-1",
-      userId: "local-user-123"
+      userId: "local-user-123",
+      antiCheatStatus: 'SAFE',
+      flagged: false,
     },
     {
       id: "order-002",
@@ -133,7 +135,9 @@ export const mockOrders: Order[] = [
       createdAt: "2023-10-27T11:30:00Z",
       status: "In Progress",
       panelId: "panel-1",
-      userId: "local-user-123"
+      userId: "local-user-123",
+      antiCheatStatus: 'MONITORING',
+      flagged: false,
     },
     {
       id: "order-003",
@@ -144,7 +148,9 @@ export const mockOrders: Order[] = [
       createdAt: "2023-10-28T14:00:00Z",
       status: "Pending",
       panelId: "panel-2",
-      userId: "local-user-123"
+      userId: "local-user-123",
+      antiCheatStatus: 'SAFE',
+      flagged: false,
     },
     {
       id: "order-004",
@@ -155,7 +161,9 @@ export const mockOrders: Order[] = [
       createdAt: "2023-10-28T18:00:00Z",
       status: "Completed",
       panelId: "panel-3",
-      userId: "local-user-123"
+      userId: "local-user-123",
+      antiCheatStatus: 'SAFE',
+      flagged: false,
     },
     {
       id: "order-005",
@@ -166,6 +174,8 @@ export const mockOrders: Order[] = [
       createdAt: "2023-10-29T09:00:00Z",
       status: "Canceled",
       panelId: "panel-2",
-      userId: "local-user-123"
+      userId: "local-user-123",
+      antiCheatStatus: 'DETECTED',
+      flagged: true,
     }
   ];
