@@ -10,11 +10,16 @@ export default function SignUpPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
+  // On successful signup, the form or provider will redirect.
+  // This page should not redirect if the user is already logged in.
+
+  // This useEffect will redirect to dashboard upon successful login from this page.
   useEffect(() => {
     if (!isUserLoading && user) {
       router.replace('/dashboard');
     }
   }, [user, isUserLoading, router]);
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
