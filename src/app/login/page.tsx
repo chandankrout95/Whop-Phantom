@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Terminal } from 'lucide-react';
@@ -20,7 +21,7 @@ export default function LoginPage() {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-4 font-mono">
       <HackerBackground />
-      <div className="relative z-10 w-full max-w-md space-y-4 text-center">
+      <div className="relative z-10 w-full max-w-sm space-y-4 text-center">
 
         <CobraAnimation />
         
@@ -29,8 +30,8 @@ export default function LoginPage() {
         </h1>
 
 
-        <div className="w-full max-w-md rounded-lg border border-green-700/50 bg-black/50 p-4 shadow-[0_0_20px_rgba(0,255,0,0.2)] backdrop-blur-sm">
-            <div className="flex items-center justify-between border-b border-green-700/50 pb-2 mb-6">
+        <div className="w-full max-w-sm rounded-lg border border-green-700/50 bg-black/50 p-3 shadow-[0_0_20px_rgba(0,255,0,0.2)] backdrop-blur-sm">
+            <div className="flex items-center justify-between border-b border-green-700/50 pb-2 mb-4">
                 <div className="flex items-center gap-2">
                     <Terminal className="h-5 w-5 text-primary" />
                     <h1 className="text-lg text-primary">AUTH_TERMINAL</h1>
@@ -42,10 +43,10 @@ export default function LoginPage() {
                 </div>
             </div>
             <div>
-              <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-foreground">
+              <h2 className="mt-4 text-center text-xl font-bold tracking-tight text-foreground">
                 Secure Access Required
               </h2>
-              <p className="mt-2 text-center text-sm text-muted-foreground">
+              <p className="mt-2 text-center text-xs text-muted-foreground">
                 Or{' '}
                 <a
                   href="/signup"
@@ -55,7 +56,7 @@ export default function LoginPage() {
                 </a>
               </p>
             </div>
-            <div className="p-6">
+            <div className="p-4">
                 <LoginForm />
             </div>
         </div>
