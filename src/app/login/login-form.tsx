@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth, initiateEmailSignIn, initiateAnonymousSignIn } from '@/firebase';
+import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -26,7 +26,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const auth = useAuth();
+  const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,27 +38,28 @@ export function LoginForm() {
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     setError(null);
-    initiateEmailSignIn(auth, data.email, data.password);
-    // We don't set loading to false here, the page will redirect on success
-  };
-
-  const handleAnonymousLogin = () => {
-    setIsLoading(true);
-    setError(null);
-    initiateAnonymousSignIn(auth);
-  }
-
-  // The onAuthStateChanged listener in the provider will handle success and redirect.
-  // We can add a listener for sign-in failures to show an error.
-  useState(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
+    try {
+      await login(data.email, data.password);
+      // The redirect is handled by the page component now
+    } catch (e: any) {
+      setError(e.message);
       setIsLoading(false);
-    });
-    return unsubscribe;
-  });
+    }
+  };
+  
+  const handleAnonymousLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+        await login('guest@example.com', 'password');
+    } catch (e: any) {
+        setError(e.message);
+        setIsLoading(false);
+    }
+  }
 
   return (
     <Form {...form}>

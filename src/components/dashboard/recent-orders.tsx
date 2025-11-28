@@ -20,18 +20,20 @@ import type { Order, Service, Panel } from "@/lib/types";
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit, collectionGroup } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 
 export function RecentOrders() {
-  const { firestore, user } = useFirebase();
+  const { firestore } = useFirebase();
+  const { user } = useAuth();
 
   const ordersRef = useMemoFirebase(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`), orderBy('createdAt', 'desc'), limit(5)) : null, [firestore, user]);
   const { data: recentOrders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
 
-  const servicesQuery = useMemoFirebase(() => firestore && user ? query(collectionGroup(firestore, 'services')) : null, [firestore, user]);
+  const servicesQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore]);
   const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
 
-  const panelsRef = useMemoFirebase(() => firestore && user ? collection(firestore, 'smm_panels') : null, [firestore, user]);
+  const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const getStatusVariant = (status: string) => {

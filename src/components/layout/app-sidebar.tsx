@@ -22,8 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import type { NavItem } from '@/lib/types';
 import Link from 'next/link';
-import { useAuth } from '@/firebase';
-import { signOut } from 'firebase/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 const navItems: NavItem[] = [
   { href: '/dashboard', title: 'Dashboard', icon: LayoutDashboard },
@@ -35,11 +34,11 @@ const navItems: NavItem[] = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const auth = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const handleSignOut = () => {
-    signOut(auth);
+    logout();
     router.push('/login');
   };
 
@@ -73,23 +72,23 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarSeparator />
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Profile">
-              <div className="flex items-center gap-2">
-                <Avatar className="w-8 h-8">
-                  {auth.currentUser?.photoURL && <AvatarImage src={auth.currentUser?.photoURL} alt="User Avatar" />}
-                  <AvatarFallback>{auth.currentUser?.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <span>{auth.currentUser?.displayName || auth.currentUser?.email}</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
            <SidebarMenuItem>
               <SidebarMenuButton tooltip="Logout" onClick={handleSignOut}>
                 <LogOut />
                 <span>Logout</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Profile">
+              <div className="flex items-center gap-2">
+                <Avatar className="w-8 h-8">
+                  {user?.photoURL && <AvatarImage src={user.photoURL} alt="User Avatar" />}
+                  <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <span>{user?.displayName || user?.email}</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </>

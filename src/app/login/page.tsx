@@ -2,23 +2,19 @@
 
 import { Zap } from 'lucide-react';
 import { LoginForm } from './login-form';
-import { useUser } from '@/firebase';
+import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function LoginPage() {
-  const { user, isUserLoading } = useUser();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
-
-  // On successful login, the form or provider will redirect.
-  // This page should not redirect if the user is already logged in.
   
-  // This useEffect will redirect to dashboard upon successful login from this page.
   useEffect(() => {
-    if (!isUserLoading && user) {
+    if (!isLoading && user) {
       router.replace('/dashboard');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isLoading, router]);
 
 
   return (

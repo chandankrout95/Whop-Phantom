@@ -13,13 +13,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth, initiateEmailSignUp, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getAuth, updateProfile } from 'firebase/auth';
-import { useFirebase } from '@/firebase';
 
 const signupSchema = z
   .object({
@@ -36,8 +33,7 @@ const signupSchema = z
 type SignUpFormValues = z.infer<typeof signupSchema>;
 
 export function SignUpForm() {
-  const auth = useAuth();
-  const { firestore } = useFirebase();
+  const { signup } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -55,21 +51,7 @@ export function SignUpForm() {
     setIsLoading(true);
     setError(null);
     try {
-      const userCredential = await initiateEmailSignUp(auth, data.email, data.password);
-      const user = userCredential.user;
-      
-      await updateProfile(user, { displayName: data.username });
-
-      const userDocRef = doc(firestore, `users/${user.uid}`);
-      const userData = {
-        id: user.uid,
-        username: data.username,
-        email: data.email,
-        balance: 0,
-        created_at: new Date().toISOString(),
-      };
-      setDocumentNonBlocking(userDocRef, userData, { merge: true });
-
+      await signup(data.email, data.password, data.username);
     } catch (e: any) {
         setError(e.message);
         setIsLoading(false);

@@ -23,15 +23,17 @@ import { PlusCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, collectionGroup, Timestamp } from 'firebase/firestore';
+import { useAuth } from '@/hooks/use-auth';
 
 
 export default function OrdersPage() {
-  const { firestore, user } = useFirebase();
+  const { firestore } = useFirebase();
+  const { user } = useAuth();
 
   const ordersRef = useMemoFirebase(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`), orderBy('createdAt', 'desc')) : null, [firestore, user]);
   const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
 
-  const servicesQuery = useMemoFirebase(() => firestore && user ? query(collectionGroup(firestore, 'services')) : null, [firestore, user]);
+  const servicesQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore]);
   const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
 
   const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);

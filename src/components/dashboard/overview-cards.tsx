@@ -11,11 +11,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from '../ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
 
 export function OverviewCards() {
-  const { firestore, user } = useFirebase();
+  const { firestore } = useFirebase();
+  const { user } = useAuth();
 
-  const panelsRef = useMemoFirebase(() => firestore && user ? query(collection(firestore, 'smm_panels')) : null, [firestore, user]);
+  const panelsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'smm_panels')) : null, [firestore]);
   const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
   
   const ordersRef = useMemoFirebase(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`)) : null, [firestore, user]);

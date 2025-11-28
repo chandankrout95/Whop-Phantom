@@ -7,23 +7,23 @@ import {
   SidebarProvider,
 } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
-import { useUser } from '@/firebase';
+import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { AuthProvider } from '@/hooks/use-auth';
 
 function DashboardRootLayout({ children }: { children: React.ReactNode }) {
-  const { user, isUserLoading } = useUser();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!isLoading && !user) {
       router.push('/login');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isLoading, router]);
 
-  if (isUserLoading || !user) {
+  if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -51,8 +51,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <FirebaseClientProvider>
+    <AuthProvider>
       <DashboardRootLayout>{children}</DashboardRootLayout>
-    </FirebaseClientProvider>
+    </AuthProvider>
   );
 }
