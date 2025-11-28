@@ -11,7 +11,7 @@ export default function WhopPhantomPage() {
       <HackerBackground />
       <ScrollArea className="h-full w-full">
         <div className="relative z-10 flex min-h-full w-full items-center justify-center p-4 md:p-8">
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-2xl">
             <WhopPhantomForm />
           </div>
         </div>
