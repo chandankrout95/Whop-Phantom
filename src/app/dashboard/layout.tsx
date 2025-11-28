@@ -38,8 +38,15 @@ function DashboardRootLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+        <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
             <SidebarTrigger />
+            <div className="flex-1 text-center">
+                <h1 className="text-xl font-bold tracking-tight text-primary animate-flicker-glitch" style={{ textShadow: '0 0 10px hsl(var(--primary))' }}>
+                    Whop Phantom
+                </h1>
+            </div>
+            {/* Empty div to balance the SidebarTrigger and center the title */}
+            <div className="w-7" />
         </header>
         <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </SidebarInset>
