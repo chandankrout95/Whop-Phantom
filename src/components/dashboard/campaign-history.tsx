@@ -22,6 +22,7 @@ import { mockOrders } from '@/lib/mock-data';
 import { useEffect, useState } from "react";
 import { Progress } from "../ui/progress";
 import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const AntiCheatIcon = ({ status }: { status: string }) => {
     switch (status) {
