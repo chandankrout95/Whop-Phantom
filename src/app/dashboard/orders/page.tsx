@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -19,25 +18,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Order, Service, Panel } from "@/lib/types";
-import { PlusCircle, Loader2 } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import Link from "next/link";
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, collectionGroup, Timestamp } from 'firebase/firestore';
-import { useAuth } from '@/hooks/use-auth';
+import { mockOrders, mockServices, mockPanels } from '@/lib/mock-data';
+import { Timestamp } from "firebase/firestore";
 
 
 export default function OrdersPage() {
-  const { firestore } = useFirebase();
-  const { user } = useAuth();
-
-  const ordersRef = useMemoFirebase(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`), orderBy('createdAt', 'desc')) : null, [firestore, user]);
-  const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
-
-  const servicesQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore]);
-  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
-
-  const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
-  const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
+  const orders: Order[] = mockOrders;
+  const services: Service[] = mockServices;
+  const panels: Panel[] = mockPanels;
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -54,10 +44,12 @@ export default function OrdersPage() {
     }
   };
 
-  const isLoading = ordersLoading || servicesLoading || panelsLoading;
-
   const formatDate = (dateValue: any) => {
     if (!dateValue) return '';
+    // This is a simplified date formatter since we're using string dates now
+    if (typeof dateValue === 'string') {
+        return new Date(dateValue).toLocaleDateString();
+    }
     if (dateValue instanceof Timestamp) {
       return dateValue.toDate().toLocaleDateString();
     }
@@ -82,11 +74,6 @@ export default function OrdersPage() {
           <CardDescription>A complete list of all your orders.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -128,7 +115,6 @@ export default function OrdersPage() {
               })}
             </TableBody>
           </Table>
-          )}
         </CardContent>
       </Card>
     </div>

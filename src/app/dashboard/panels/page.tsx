@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -18,9 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Panel } from "@/lib/types";
-import { PlusCircle, Loader2 } from "lucide-react";
-import { useCollection, addDocumentNonBlocking, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { PlusCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -32,28 +30,24 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { mockPanels } from '@/lib/mock-data';
 
 
 export default function PanelsPage() {
-  const { firestore, user } = useFirebase();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [panels, setPanels] = useState<Panel[]>(mockPanels);
   const [newPanel, setNewPanel] = useState({ name: '', apiUrl: '', apiKey: ''});
-
-
-  const panelsRef = useMemoFirebase(() => firestore && user ? collection(firestore, 'smm_panels') : null, [firestore, user]);
-  const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
 
   const handleAddPanel = () => {
     if (!newPanel.name || !newPanel.apiUrl || !newPanel.apiKey) return;
     
-    const panelData = {
+    const panelData: Panel = {
       ...newPanel,
-      id: `panel-${(panels?.length || 0) + 2}`,
+      id: `panel-${panels.length + 1}`,
       balance: Math.floor(Math.random() * 500)
-    }
+    };
 
-    if (!panelsRef) return;
-    addDocumentNonBlocking(panelsRef, panelData);
+    setPanels(prev => [...prev, panelData]);
     setNewPanel({ name: '', apiUrl: '', apiKey: ''});
     setIsDialogOpen(false);
   }
@@ -111,11 +105,6 @@ export default function PanelsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {panelsLoading ? (
-             <div className="flex justify-center items-center h-40">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -138,7 +127,6 @@ export default function PanelsPage() {
               ))}
             </TableBody>
           </Table>
-          )}
         </CardContent>
       </Card>
     </div>

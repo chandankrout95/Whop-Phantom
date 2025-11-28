@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+
 import {
   Card,
   CardContent,
@@ -17,24 +17,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { Order, Service, Panel } from "@/lib/types";
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit, collectionGroup } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { mockOrders, mockServices, mockPanels } from '@/lib/mock-data';
 
 
 export function RecentOrders() {
-  const { firestore } = useFirebase();
-  const { user } = useAuth();
-
-  const ordersRef = useMemoFirebase(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`), orderBy('createdAt', 'desc'), limit(5)) : null, [firestore, user]);
-  const { data: recentOrders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
-
-  const servicesQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'services')) : null, [firestore]);
-  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
-
-  const panelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'smm_panels') : null, [firestore]);
-  const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
+  const recentOrders: Order[] = mockOrders.slice(0, 5);
+  const services: Service[] = mockServices;
+  const panels: Panel[] = mockPanels;
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -51,8 +40,6 @@ export function RecentOrders() {
     }
   };
 
-  const isLoading = ordersLoading || servicesLoading || panelsLoading;
-
   return (
     <Card>
       <CardHeader>
@@ -60,11 +47,6 @@ export function RecentOrders() {
         <CardDescription>A list of your most recent orders.</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center items-center h-48">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -102,7 +84,6 @@ export function RecentOrders() {
               })}
             </TableBody>
           </Table>
-        )}
       </CardContent>
     </Card>
   );

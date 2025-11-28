@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+
 import {
   Card,
   CardContent,
@@ -15,21 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Service, Panel } from '@/lib/types';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, collectionGroup, query } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import type { Service } from '@/lib/types';
+import { mockServices, mockPanels } from '@/lib/mock-data';
 
 export default function ServicesPage() {
-  const { firestore, user } = useFirebase();
-
-  const servicesQuery = useMemoFirebase(() => firestore && user ? query(collectionGroup(firestore, 'services')) : null, [firestore, user]);
-  const { data: services, isLoading: servicesLoading } = useCollection<Service>(servicesQuery);
-
-  const panelsRef = useMemoFirebase(() => firestore && user ? collection(firestore, 'smm_panels') : null, [firestore, user]);
-  const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
-
-  const isLoading = servicesLoading || panelsLoading;
+  const services = mockServices;
+  const panels = mockPanels;
 
   return (
     <div className="flex flex-col gap-8">
@@ -43,41 +34,35 @@ export default function ServicesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Panel</TableHead>
-                  <TableHead className="text-right">Rate / 1k</TableHead>
-                  <TableHead className="text-right">Min / Max</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {services?.map((service) => {
-                  const panel = panels?.find((p) => p.id === service.smmPanelId);
-                  return (
-                    <TableRow key={service.id}>
-                      <TableCell className="font-medium">{service.name}</TableCell>
-                      <TableCell>{service.category}</TableCell>
-                      <TableCell>{panel?.name}</TableCell>
-                      <TableCell className="text-right">
-                        ${service.rate.toFixed(3)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {service.min} / {service.max.toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Service Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Panel</TableHead>
+                <TableHead className="text-right">Rate / 1k</TableHead>
+                <TableHead className="text-right">Min / Max</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {services?.map((service) => {
+                const panel = panels?.find((p) => p.id === service.smmPanelId);
+                return (
+                  <TableRow key={service.id}>
+                    <TableCell className="font-medium">{service.name}</TableCell>
+                    <TableCell>{service.category}</TableCell>
+                    <TableCell>{panel?.name}</TableCell>
+                    <TableCell className="text-right">
+                      ${service.rate.toFixed(3)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {service.min} / {service.max.toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

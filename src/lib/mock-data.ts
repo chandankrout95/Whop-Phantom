@@ -1,12 +1,6 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, writeBatch } from 'firebase/firestore';
-import { firebaseConfig } from '../src/firebase/config'; 
+import type { Panel, Service, Order } from './types';
 
-// Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
-
-const panels = [
+export const mockPanels: Panel[] = [
   {
     id: 'panel-1',
     name: 'SpeedySMM',
@@ -30,7 +24,7 @@ const panels = [
   },
 ];
 
-const services = [
+export const mockServices: Service[] = [
   // Instagram Followers
   {
     id: 'svc-001',
@@ -118,35 +112,60 @@ const services = [
 ];
 
 
-async function seedDatabase() {
-  console.log('Seeding database...');
-  const batch = writeBatch(db);
-
-  // Seed panels
-  const panelsCollection = collection(db, 'smm_panels');
-  panels.forEach(panel => {
-    const docRef = panelsCollection.doc(panel.id);
-    batch.set(docRef, panel);
-  });
-  console.log('Panels queued for seeding.');
-
-  // Seed services
-  services.forEach(service => {
-    const servicesCollection = collection(db, `smm_panels/${service.smmPanelId}/services`);
-    const docRef = servicesCollection.doc(service.id);
-    batch.set(docRef, service);
-  });
-  console.log('Services queued for seeding.');
-
-
-  try {
-    await batch.commit();
-    console.log('Database seeded successfully!');
-  } catch (error) {
-    console.error('Error seeding database: ', error);
-  } finally {
-    process.exit();
-  }
-}
-
-seedDatabase();
+export const mockOrders: Order[] = [
+    {
+      id: "order-001",
+      serviceId: "svc-001",
+      link: "https://instagram.com/user1",
+      quantity: 1000,
+      charge: 1.20,
+      createdAt: "2023-10-26T10:00:00Z",
+      status: "Completed",
+      panelId: "panel-1",
+      userId: "local-user-123"
+    },
+    {
+      id: "order-002",
+      serviceId: "svc-004",
+      link: "https://instagram.com/p/post-id",
+      quantity: 500,
+      charge: 0.25,
+      createdAt: "2023-10-27T11:30:00Z",
+      status: "In Progress",
+      panelId: "panel-1",
+      userId: "local-user-123"
+    },
+    {
+      id: "order-003",
+      serviceId: "svc-006",
+      link: "https://tiktok.com/@user/video/123",
+      quantity: 10000,
+      charge: 1.00,
+      createdAt: "2023-10-28T14:00:00Z",
+      status: "Pending",
+      panelId: "panel-2",
+      userId: "local-user-123"
+    },
+    {
+      id: "order-004",
+      serviceId: "svc-008",
+      link: "https://youtube.com/channel/user-channel",
+      quantity: 100,
+      charge: 15.00,
+      createdAt: "2023-10-28T18:00:00Z",
+      status: "Completed",
+      panelId: "panel-3",
+      userId: "local-user-123"
+    },
+    {
+      id: "order-005",
+      serviceId: "svc-002",
+      link: "https://instagram.com/user2",
+      quantity: 2000,
+      charge: 2.20,
+      createdAt: "2023-10-29T09:00:00Z",
+      status: "Canceled",
+      panelId: "panel-2",
+      userId: "local-user-123"
+    }
+  ];

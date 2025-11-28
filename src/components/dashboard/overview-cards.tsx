@@ -1,43 +1,22 @@
 'use client';
 import { useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
 import type { Panel, Order } from "@/lib/types";
-import { DollarSign, ListOrdered, Server, Loader2 } from "lucide-react";
+import { DollarSign, ListOrdered, Server } from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from '../ui/skeleton';
-import { useAuth } from '@/hooks/use-auth';
+import { mockPanels, mockOrders } from '@/lib/mock-data';
 
 export function OverviewCards() {
-  const { firestore } = useFirebase();
-  const { user } = useAuth();
-
-  const panelsRef = useMemoFirebase(() => firestore ? query(collection(firestore, 'smm_panels')) : null, [firestore]);
-  const { data: panels, isLoading: panelsLoading } = useCollection<Panel>(panelsRef);
-  
-  const ordersRef = useMemoFirebase(() => user && firestore ? query(collection(firestore, `users/${user.uid}/orders`)) : null, [firestore, user]);
-  const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersRef);
+  const panels: Panel[] = mockPanels;
+  const orders: Order[] = mockOrders;
 
   const totalBalance = useMemo(() => panels?.reduce((sum, panel) => sum + panel.balance, 0), [panels]);
   const totalOrders = orders?.length ?? 0;
   const activePanels = panels?.length ?? 0;
-
-  const isLoading = panelsLoading || ordersLoading;
-
-  if (isLoading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Skeleton className="h-[126px]" />
-        <Skeleton className="h-[126px]" />
-        <Skeleton className="h-[126px]" />
-      </div>
-    )
-  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
