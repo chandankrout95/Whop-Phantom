@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -88,10 +89,28 @@ export default {
             height: '0',
           },
         },
+        'flicker-glitch': {
+          '0%, 100%': {
+            opacity: '1',
+            textShadow: '0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary)), 0 0 30px hsl(var(--primary))'
+          },
+          '5%, 15%, 25%, 35%, 45%, 55%, 65%, 75%, 85%, 95%': {
+            opacity: '0.8',
+            textShadow: '0 0 5px hsl(var(--primary)), 0 0 10px hsl(var(--primary))'
+          },
+          '10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%': {
+            opacity: '1',
+            textShadow: '0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary)), 0 0 40px hsl(var(--primary))'
+          },
+          '50%': {
+            transform: 'skewX(2deg) translateX(-5px)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'flicker-glitch': 'flicker-glitch 2s linear infinite',
       },
     },
   },

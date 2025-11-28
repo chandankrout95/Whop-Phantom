@@ -25,7 +25,7 @@ export default function LoginPage() {
 
         <CobraAnimation />
         
-        <h1 className="text-5xl font-bold text-primary animate-pulse" style={{ textShadow: '0 0 10px hsl(var(--primary))' }}>
+        <h1 className="text-5xl font-bold text-primary animate-flicker-glitch" style={{ textShadow: '0 0 10px hsl(var(--primary))' }}>
           Whop Phantom
         </h1>
 
