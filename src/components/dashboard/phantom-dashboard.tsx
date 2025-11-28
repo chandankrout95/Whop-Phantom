@@ -3,18 +3,16 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
-  Area,
 } from 'recharts';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789{}[]();:<>/?|';
 const generateRandomString = (length: number) => {
@@ -27,10 +25,9 @@ const generateRandomString = (length: number) => {
 
 const generateChartData = () => {
     const data = [];
-    let lastValue = 500;
+    let lastValue = 50;
     for (let i = 0; i < 15; i++) {
-        lastValue += Math.random() * 200 - 100;
-        if(lastValue < 0) lastValue = Math.random() * 100;
+        lastValue += Math.random() * 100;
         data.push({ name: `T-${15-i}`, views: Math.round(lastValue) });
     }
     return data;
