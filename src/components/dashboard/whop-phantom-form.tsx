@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { CampaignHistory } from './campaign-history';
+import { Label } from '@/components/ui/label';
 
 
 const phantomFormSchema = z.object({
