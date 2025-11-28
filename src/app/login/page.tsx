@@ -1,11 +1,12 @@
 'use client';
 
-import { Terminal, Zap } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 import { LoginForm } from './login-form';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { HackerBackground } from '@/components/hacker-background';
+import { CobraAnimation } from '@/components/cobra-animation';
 
 export default function LoginPage() {
   const { user, isLoading } = useAuth();
@@ -17,9 +18,17 @@ export default function LoginPage() {
 
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4 font-mono">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-4 font-mono">
       <HackerBackground />
-      <div className="relative z-10 w-full max-w-md space-y-8">
+      <div className="relative z-10 w-full max-w-md space-y-4 text-center">
+
+        <CobraAnimation />
+        
+        <h1 className="text-5xl font-bold text-primary animate-pulse" style={{ textShadow: '0 0 10px hsl(var(--primary))' }}>
+          Whop Phantom
+        </h1>
+
+
         <div className="w-full max-w-md rounded-lg border border-green-700/50 bg-black/50 p-4 shadow-[0_0_20px_rgba(0,255,0,0.2)] backdrop-blur-sm">
             <div className="flex items-center justify-between border-b border-green-700/50 pb-2 mb-6">
                 <div className="flex items-center gap-2">
