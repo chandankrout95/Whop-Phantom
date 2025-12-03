@@ -20,13 +20,13 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useEffect, useState, useMemo } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { CampaignHistory } from './campaign-history';
 import { Label } from '@/components/ui/label';
 import type { Order } from '@/lib/types';
 import { getSmmServices, placeSmmOrder } from '@/app/dashboard/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ScrollArea } from '../ui/scroll-area';
 import { useNewOrder } from '@/context/new-order-context';
+import { CampaignHistory } from './campaign-history';
 
 
 const phantomFormSchema = z.object({
@@ -94,7 +94,7 @@ export function WhopPhantomForm({
     let servicesByPlatform = services;
     if (platform !== 'all' && platform) {
       servicesByPlatform = services.filter(service => 
-        service.category.toLowerCase().includes(platform.toLowerCase())
+        (service.category?.toLowerCase() || '').includes(platform.toLowerCase())
       );
     }
     
@@ -115,63 +115,46 @@ export function WhopPhantomForm({
       campaignName: '',
       videoLink: '',
       serviceId: '',
-      totalViews: 0,
+      totalViews: 1000,
       variant: 'standard',
-      quantityFrom: 0,
-      quantityTo: 0,
+      quantityFrom: 100,
+      quantityTo: 150,
       timeInterval: "11",
     },
   });
 
   const onSubmit = async (data: PhantomFormValues) => {
-    setIsSubmitting(true);
     
     const selectedService = services.find(s => s.service === data.serviceId);
 
-    try {
-        const result = await placeSmmOrder({
-            link: data.videoLink,
-            quantity: data.totalViews,
-            serviceId: data.serviceId,
-        });
-
-        if (result.success && result.orderId) {
-            const newCampaign: Order = {
-                id: result.orderId.toString(),
-                link: data.videoLink,
-                quantity: data.totalViews,
-                status: 'In Progress', // Assuming it starts as 'In Progress'
-                createdAt: new Date().toISOString(),
-                serviceId: data.serviceId,
-                charge: 0, // We don't have charge info yet from the 'add' call
-                panelId: 'smmsocialmedia', // Identifier for the new panel
-                userId: 'local-user-123',
-                antiCheatStatus: 'MONITORING',
-                flagged: false,
-            };
-
-            setCampaigns(prev => [newCampaign, ...prev]);
-
-            toast({
-                title: "Order Placed Successfully",
-                description: `Campaign "${data.campaignName}" for "${selectedService?.name}" has started with Order ID: ${result.orderId}.`,
-                variant: 'default'
-            });
-            form.reset();
-        } else {
-            throw new Error(result.error || 'Failed to place order.');
+    const newCampaign: Order = {
+        id: `C-${Date.now()}`,
+        link: data.videoLink,
+        quantity: data.totalViews,
+        status: 'In Progress', 
+        createdAt: new Date().toISOString(),
+        serviceId: data.serviceId,
+        charge: 0,
+        panelId: 'smmsocialmedia', 
+        userId: 'local-user-123',
+        antiCheatStatus: 'MONITORING',
+        flagged: false,
+        dripFeed: {
+          ...data,
+          totalOrdered: 0,
+          runs: 0,
+          nextRun: Date.now() + (parseInt(data.timeInterval) * 60 * 1000)
         }
+    };
 
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        toast({
-            title: "Error Placing Order",
-            description: errorMessage,
-            variant: 'destructive'
-        });
-    } finally {
-        setIsSubmitting(false);
-    }
+    setCampaigns(prev => [newCampaign, ...prev]);
+
+    toast({
+        title: "Drip-Feed Campaign Started",
+        description: `Campaign "${data.campaignName}" for "${selectedService?.name}" has been initiated.`,
+        variant: 'default'
+    });
+    form.reset();
   };
 
   return (

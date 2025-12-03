@@ -38,57 +38,72 @@ const AntiCheatIcon = ({ status }: { status: string }) => {
 
 const CampaignRow = ({ campaign }: { campaign: Order }) => {
     const [delivered, setDelivered] = useState(0);
-    const [countdown, setCountdown] = useState(30);
+    const [countdown, setCountdown] = useState(0);
 
-    const completionPercentage = (delivered / campaign.quantity) * 100;
-
+    const isDripFeed = !!campaign.dripFeed;
+    const totalQuantity = isDripFeed ? campaign.dripFeed!.totalViews : campaign.quantity;
+    const currentDelivered = isDripFeed ? campaign.dripFeed!.totalOrdered : delivered;
+    const completionPercentage = (currentDelivered / totalQuantity) * 100;
+    
     useEffect(() => {
-        const deliveredInterval = setInterval(() => {
-            if (campaign.status === 'Completed') {
-                setDelivered(campaign.quantity);
-                clearInterval(deliveredInterval);
-                return;
-            }
-             if (campaign.status !== 'In Progress') {
-                clearInterval(deliveredInterval);
-                return;
-            }
-            setDelivered(d => {
-                const next = d + Math.floor(Math.random() * (campaign.quantity/20));
-                return next > campaign.quantity ? campaign.quantity : next;
-            });
-        }, 1000 + Math.random() * 1000);
-
-        return () => clearInterval(deliveredInterval);
-    }, [campaign.quantity, campaign.status]);
+        if (!isDripFeed) {
+            const deliveredInterval = setInterval(() => {
+                if (campaign.status === 'Completed') {
+                    setDelivered(campaign.quantity);
+                    clearInterval(deliveredInterval);
+                    return;
+                }
+                 if (campaign.status !== 'In Progress') {
+                    clearInterval(deliveredInterval);
+                    return;
+                }
+                setDelivered(d => {
+                    const next = d + Math.floor(Math.random() * (campaign.quantity/20));
+                    return next > campaign.quantity ? campaign.quantity : next;
+                });
+            }, 1000 + Math.random() * 1000);
+            return () => clearInterval(deliveredInterval);
+        }
+    }, [campaign.quantity, campaign.status, isDripFeed]);
 
      useEffect(() => {
-        const countdownInterval = setInterval(() => {
-            if (campaign.status !== 'In Progress') {
-                clearInterval(countdownInterval);
-                return;
+        if (campaign.status !== 'In Progress') {
+            setCountdown(0);
+            return;
+        }
+
+        const calculateCountdown = () => {
+            if (isDripFeed) {
+                const now = Date.now();
+                const next = campaign.dripFeed!.nextRun;
+                const diff = Math.max(0, Math.floor((next - now) / 1000));
+                setCountdown(diff);
+            } else {
+                 setCountdown(c => (c > 0 ? c - 1 : Math.floor(Math.random() * 30) + 30));
             }
-            setCountdown(c => (c > 0 ? c - 1 : Math.floor(Math.random() * 30) + 30));
-        }, 1000);
+        };
+        
+        calculateCountdown();
+        const countdownInterval = setInterval(calculateCountdown, 1000);
         return () => clearInterval(countdownInterval);
-    }, [campaign.status]);
+    }, [campaign, isDripFeed]);
 
 
     return (
         <TableRow>
             <TableCell>
-                <div className="font-medium">Campaign {campaign.id.slice(-6)}</div>
+                <div className="font-medium">{campaign.dripFeed?.campaignName || `Order ${campaign.id.slice(-6)}`}</div>
                 <div className="text-xs text-muted-foreground truncate max-w-[150px]">{campaign.link}</div>
             </TableCell>
-            <TableCell className="text-center">{campaign.quantity.toLocaleString()}</TableCell>
+            <TableCell className="text-center">{totalQuantity.toLocaleString()}</TableCell>
             <TableCell>
                 <div className="flex flex-col gap-1 items-center">
-                    <span>{delivered.toLocaleString()}</span>
+                    <span>{currentDelivered.toLocaleString()}</span>
                     <Progress value={completionPercentage} className="h-1 w-24" />
                 </div>
             </TableCell>
             <TableCell className="text-center">
-                {campaign.status === 'In Progress' ? `${countdown}s` : '--'}
+                {campaign.status === 'In Progress' && countdown > 0 ? `${countdown}s` : '--'}
             </TableCell>
             <TableCell className="text-center">
                 <Badge variant={campaign.status === 'Completed' ? 'default' : campaign.status === 'In Progress' ? 'secondary' : 'destructive'}>

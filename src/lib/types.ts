@@ -1,5 +1,4 @@
 import { FieldValue } from "firebase/firestore";
-import { cn } from "./utils";
 
 export type Panel = {
   id: string;
@@ -20,6 +19,21 @@ export type Service = {
   estimatedDeliveryTime: string; // e.g., "24 hours", "1-2 days"
 };
 
+type DripFeedData = {
+    campaignName: string;
+    videoLink: string;
+    serviceId: string;
+    totalViews: number;
+    variant: "standard" | "hq" | "premium";
+    quantityFrom: number;
+    quantityTo: number;
+    timeInterval: string;
+    totalOrdered: number;
+    runs: number;
+    nextRun: number;
+}
+
+
 export type Order = {
   id: string;
   serviceId: string;
@@ -32,6 +46,7 @@ export type Order = {
   userId: string;
   antiCheatStatus?: 'SAFE' | 'MONITORING' | 'DETECTED';
   flagged?: boolean;
+  dripFeed?: DripFeedData;
 };
 
 export type NavItem = {
