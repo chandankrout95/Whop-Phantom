@@ -67,6 +67,7 @@ export function WhopPhantomForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [services, setServices] = useState<any[]>([]);
   const { platform } = useNewOrder();
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -85,14 +86,22 @@ export function WhopPhantomForm() {
   }, [toast]);
 
   const filteredServices = useMemo(() => {
-    if (platform === 'all' || !platform) {
-      return services;
+    let servicesByPlatform = services;
+    if (platform !== 'all' && platform) {
+      servicesByPlatform = services.filter(service => 
+        service.category.toLowerCase().includes(platform.toLowerCase())
+      );
     }
-    // Matching logic for platform names, e.g. "youtube" should match "YouTube" category
-    return services.filter(service => 
-      service.category.toLowerCase().includes(platform.toLowerCase())
+    
+    if (!searchTerm) {
+        return servicesByPlatform;
+    }
+
+    return servicesByPlatform.filter(service => 
+        service.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [services, platform]);
+
+  }, [services, platform, searchTerm]);
 
 
   const form = useForm<PhantomFormValues>({
@@ -161,7 +170,7 @@ export function WhopPhantomForm() {
   };
 
   return (
-    <div className="w-full rounded-lg border border-green-700/50 bg-black/50 p-3 shadow-[0_0_20px_rgba(0,255,0,0.2)] backdrop-blur-sm">
+    <div className="w-full h-full overflow-y-auto rounded-lg border border-green-700/50 bg-black/50 p-3 shadow-[0_0_20px_rgba(0,255,0,0.2)] backdrop-blur-sm">
         <div className="flex items-center justify-between border-b border-green-700/50 pb-2 mb-4">
             <div className="flex items-center gap-2">
                 <Terminal className="h-5 w-5 text-primary" />
@@ -215,13 +224,21 @@ export function WhopPhantomForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Service</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || filteredServices.length === 0}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || services.length === 0}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder={services.length > 0 ? "Select a service..." : "Loading services..."} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                                <div className="p-2">
+                                  <Input 
+                                    placeholder="Search services..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full"
+                                  />
+                                </div>
                                 <ScrollArea className="h-72">
                                 {filteredServices.map((service) => (
                                     <SelectItem key={service.service} value={service.service.toString()}>
