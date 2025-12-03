@@ -337,8 +337,8 @@ export function WhopPhantomForm() {
                     />
 
 
-                    <Button type="submit" className="w-full !mt-6" disabled={isSubmitting || services.length === 0}>
-                        {isSubmitting ? 'Submitting...' : 'Start Botting'}
+                    <Button type="submit" className="w-full !mt-8 text-lg" size="lg" disabled={isSubmitting || services.length === 0}>
+                        {isSubmitting ? 'Submitting...' : 'Create Campaign'}
                     </Button>
                 </form>
                 </Form>
@@ -349,3 +349,5 @@ export function WhopPhantomForm() {
     </div>
   );
 }
+
+    
