@@ -20,8 +20,10 @@ import { Badge } from "@/components/ui/badge";
 import type { Order } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { Progress } from "../ui/progress";
-import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+import { MoreVertical, Pause, Play, Power, RefreshCcw, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 const AntiCheatIcon = ({ status }: { status: string }) => {
     switch (status) {
@@ -36,36 +38,25 @@ const AntiCheatIcon = ({ status }: { status: string }) => {
     }
 }
 
-const CampaignRow = ({ campaign }: { campaign: Order }) => {
-    const [delivered, setDelivered] = useState(0);
+const getStatusVariant = (status: Order['status']) => {
+    switch (status) {
+      case "Completed": return "default";
+      case "In Progress": return "secondary";
+      case "Paused": return "outline";
+      case "Stopped":
+      case "Canceled": return "destructive";
+      default: return "outline";
+    }
+}
+
+const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart') => void; }) => {
     const [countdown, setCountdown] = useState(0);
 
     const isDripFeed = !!campaign.dripFeed;
     const totalQuantity = isDripFeed ? campaign.dripFeed!.totalViews : campaign.quantity;
-    const currentDelivered = isDripFeed ? campaign.dripFeed!.totalOrdered : delivered;
+    const currentDelivered = isDripFeed ? campaign.dripFeed!.totalOrdered : 0;
     const completionPercentage = (currentDelivered / totalQuantity) * 100;
     
-    useEffect(() => {
-        if (!isDripFeed) {
-            const deliveredInterval = setInterval(() => {
-                if (campaign.status === 'Completed') {
-                    setDelivered(campaign.quantity);
-                    clearInterval(deliveredInterval);
-                    return;
-                }
-                 if (campaign.status !== 'In Progress') {
-                    clearInterval(deliveredInterval);
-                    return;
-                }
-                setDelivered(d => {
-                    const next = d + Math.floor(Math.random() * (campaign.quantity/20));
-                    return next > campaign.quantity ? campaign.quantity : next;
-                });
-            }, 1000 + Math.random() * 1000);
-            return () => clearInterval(deliveredInterval);
-        }
-    }, [campaign.quantity, campaign.status, isDripFeed]);
-
      useEffect(() => {
         if (campaign.status !== 'In Progress') {
             setCountdown(0);
@@ -106,7 +97,7 @@ const CampaignRow = ({ campaign }: { campaign: Order }) => {
                 {campaign.status === 'In Progress' && countdown > 0 ? `${countdown}s` : '--'}
             </TableCell>
             <TableCell className="text-center">
-                <Badge variant={campaign.status === 'Completed' ? 'default' : campaign.status === 'In Progress' ? 'secondary' : 'destructive'}>
+                <Badge variant={getStatusVariant(campaign.status)}>
                     {campaign.status}
                 </Badge>
             </TableCell>
@@ -122,12 +113,43 @@ const CampaignRow = ({ campaign }: { campaign: Order }) => {
                     campaign.flagged ? 'bg-red-500 shadow-[0_0_8px_red]' : 'bg-green-500 shadow-[0_0_8px_green]'
                 )}></span>
             </TableCell>
+            <TableCell className="text-right">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        {campaign.status === 'In Progress' && (
+                            <DropdownMenuItem onClick={() => onAction(campaign.id, 'pause')}>
+                                <Pause className="mr-2 h-4 w-4" /> Pause
+                            </DropdownMenuItem>
+                        )}
+                         {campaign.status === 'Paused' && (
+                            <DropdownMenuItem onClick={() => onAction(campaign.id, 'resume')}>
+                                <Play className="mr-2 h-4 w-4" /> Resume
+                            </DropdownMenuItem>
+                        )}
+                        {(campaign.status === 'In Progress' || campaign.status === 'Paused') && (
+                            <DropdownMenuItem onClick={() => onAction(campaign.id, 'stop')}>
+                                <Power className="mr-2 h-4 w-4" /> Stop
+                            </DropdownMenuItem>
+                        )}
+                         {(campaign.status === 'Completed' || campaign.status === 'Stopped') && (
+                            <DropdownMenuItem onClick={() => onAction(campaign.id, 'restart')}>
+                                <RefreshCcw className="mr-2 h-4 w-4" /> Restart
+                            </DropdownMenuItem>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </TableCell>
         </TableRow>
     );
 }
 
 
-export function CampaignHistory({ campaigns }: { campaigns: Order[] }) {
+export function CampaignHistory({ campaigns, onCampaignAction }: { campaigns: Order[], onCampaignAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart') => void; }) {
 
   return (
     <Card className="bg-background/80 backdrop-blur-sm border-border/50 h-full flex flex-col">
@@ -147,11 +169,12 @@ export function CampaignHistory({ campaigns }: { campaigns: Order[] }) {
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-center">Anti-Cheat</TableHead>
                 <TableHead className="text-center">Flagged</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {campaigns?.map((campaign) => (
-                  <CampaignRow key={campaign.id} campaign={campaign} />
+                  <CampaignRow key={campaign.id} campaign={campaign} onAction={onCampaignAction} />
               ))}
             </TableBody>
           </Table>

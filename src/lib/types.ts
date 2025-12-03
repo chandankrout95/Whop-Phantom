@@ -41,7 +41,7 @@ export type Order = {
   quantity: number;
   charge: number;
   createdAt: FieldValue | string;
-  status: "Pending" | "In Progress" | "Completed" | "Canceled" | "Partial";
+  status: "Pending" | "In Progress" | "Completed" | "Canceled" | "Partial" | "Paused" | "Stopped";
   panelId: string;
   userId: string;
   antiCheatStatus?: 'SAFE' | 'MONITORING' | 'DETECTED';

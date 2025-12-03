@@ -4,7 +4,7 @@ import { HackerBackground } from '@/components/hacker-background';
 import { PhantomDashboard } from '@/components/dashboard/phantom-dashboard';
 import { WhopPhantomForm } from '@/components/dashboard/whop-phantom-form';
 import { CampaignHistory } from '@/components/dashboard/campaign-history';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Order } from '@/lib/types';
 import { placeSmmOrder } from '@/app/dashboard/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -12,6 +12,40 @@ import { useToast } from '@/hooks/use-toast';
 export default function WhopPhantomPage() {
   const [campaigns, setCampaigns] = useState<Order[]>([]);
   const { toast } = useToast();
+
+  const handleCampaignAction = useCallback((campaignId: string, action: 'pause' | 'resume' | 'stop' | 'restart') => {
+    setCampaigns(prev => prev.map(c => {
+      if (c.id === campaignId) {
+        switch (action) {
+          case 'pause':
+            return { ...c, status: 'Paused' };
+          case 'resume':
+            // Recalculate nextRun to avoid immediate trigger if paused for a long time
+            const interval = c.dripFeed ? parseInt(c.dripFeed.timeInterval) * 60 * 1000 : 0;
+            return { 
+                ...c, 
+                status: 'In Progress', 
+                dripFeed: c.dripFeed ? { ...c.dripFeed, nextRun: Date.now() + interval } : undefined 
+            };
+          case 'stop':
+            return { ...c, status: 'Stopped' };
+          case 'restart':
+             if (!c.dripFeed) return c;
+             return {
+                ...c,
+                status: 'In Progress',
+                dripFeed: {
+                    ...c.dripFeed,
+                    totalOrdered: 0,
+                    runs: 0,
+                    nextRun: Date.now(),
+                }
+             }
+        }
+      }
+      return c;
+    }));
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -55,20 +89,19 @@ export default function WhopPhantomPage() {
                     }
                 });
 
+                const newTotalOrdered = drip.totalOrdered + quantityToOrder;
+                const newStatus = newTotalOrdered >= drip.totalViews ? 'Completed' : 'In Progress';
+
                 updatedCampaigns[index] = {
                     ...campaign,
+                    status: newStatus,
                     dripFeed: {
                         ...drip,
-                        totalOrdered: drip.totalOrdered + quantityToOrder,
+                        totalOrdered: newTotalOrdered,
                         nextRun: Date.now() + (parseInt(drip.timeInterval) * 60 * 1000),
                         runs: drip.runs + 1,
                     }
                 };
-
-                if (updatedCampaigns[index].dripFeed!.totalOrdered >= drip.totalViews) {
-                    updatedCampaigns[index].status = 'Completed';
-                }
-
             } else {
                  if (campaign.status !== 'Completed') {
                     wasUpdated = true;
@@ -98,7 +131,7 @@ export default function WhopPhantomPage() {
           </div>
         </div>
         <div className="flex-grow overflow-hidden">
-          <CampaignHistory campaigns={campaigns} />
+          <CampaignHistory campaigns={campaigns} onCampaignAction={handleCampaignAction} />
         </div>
       </div>
     </div>
