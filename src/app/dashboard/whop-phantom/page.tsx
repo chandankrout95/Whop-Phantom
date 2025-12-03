@@ -9,10 +9,13 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Order } from '@/lib/types';
 import { placeSmmOrder } from '@/app/dashboard/actions';
 import { useToast } from '@/hooks/use-toast';
+import { EditCampaignForm } from '@/components/dashboard/edit-campaign-form';
 
 export default function WhopPhantomPage() {
   const [campaigns, setCampaigns] = useState<Order[]>([]);
   const { toast } = useToast();
+  const [editingCampaign, setEditingCampaign] = useState<Order | null>(null);
+
 
   useEffect(() => {
     try {
@@ -34,7 +37,15 @@ export default function WhopPhantomPage() {
   }, [campaigns]);
 
 
-  const handleCampaignAction = useCallback((campaignId: string, action: 'pause' | 'resume' | 'stop' | 'restart') => {
+  const handleCampaignAction = useCallback((campaignId: string, action: 'pause' | 'resume' | 'stop' | 'restart' | 'edit') => {
+    if (action === 'edit') {
+      const campaignToEdit = campaigns.find(c => c.id === campaignId);
+      if (campaignToEdit) {
+        setEditingCampaign(campaignToEdit);
+      }
+      return;
+    }
+
     setCampaigns(prev => prev.map(c => {
       if (c.id === campaignId) {
         switch (action) {
@@ -66,18 +77,27 @@ export default function WhopPhantomPage() {
       }
       return c;
     }));
-  }, []);
+  }, [campaigns]);
+
+  const handleUpdateCampaign = (updatedCampaign: Order) => {
+    setCampaigns(prev => prev.map(c => c.id === updatedCampaign.id ? updatedCampaign : c));
+    setEditingCampaign(null);
+    toast({
+      title: "Campaign Updated",
+      description: `Campaign "${updatedCampaign.dripFeed?.campaignName}" has been updated.`,
+    });
+  }
+
 
   useEffect(() => {
     const processCampaigns = async () => {
       const now = Date.now();
       
-      // Find the first campaign that needs processing
       const campaignToProcess = campaigns.find(c => 
         c.status === 'In Progress' && 
         c.dripFeed && 
         c.dripFeed.nextRun <= now &&
-        c.dripFeed.totalOrdered < c.dripFeed.totalViews
+        c.dripFeed.totalOrdered < c.quantity
       );
 
       if (!campaignToProcess || !campaignToProcess.dripFeed) {
@@ -87,8 +107,6 @@ export default function WhopPhantomPage() {
       const campaignId = campaignToProcess.id;
       const drip = campaignToProcess.dripFeed;
       
-      // Mark this campaign as being processed by updating its nextRun time immediately
-      // This prevents it from being picked up again in the next interval check
       setCampaigns(prev => prev.map(c => 
           c.id === campaignId && c.dripFeed 
           ? { ...c, dripFeed: { ...c.dripFeed, nextRun: now + 5000 } } 
@@ -98,8 +116,8 @@ export default function WhopPhantomPage() {
       const quantity = Math.floor(Math.random() * (drip.quantityTo - drip.quantityFrom + 1) + drip.quantityFrom);
       let quantityToOrder = quantity;
 
-      if (drip.totalOrdered + quantity > drip.totalViews) {
-        quantityToOrder = drip.totalViews - drip.totalOrdered;
+      if (drip.totalOrdered + quantity > campaignToProcess.quantity) {
+        quantityToOrder = campaignToProcess.quantity - drip.totalOrdered;
       }
 
       if (quantityToOrder <= 0) {
@@ -124,11 +142,10 @@ export default function WhopPhantomPage() {
             description: `Order ID ${result.orderId} for ${quantityToOrder} views placed for campaign ${campaignId}.`,
           });
 
-          // Final state update after successful API call
           setCampaigns(prev => prev.map(c => {
             if (c.id === campaignId && c.dripFeed) {
               const newTotalOrdered = c.dripFeed.totalOrdered + quantityToOrder;
-              const newStatus = newTotalOrdered >= c.dripFeed.totalViews ? 'Completed' : 'In Progress';
+              const newStatus = newTotalOrdered >= c.quantity ? 'Completed' : 'In Progress';
               const timeIntervalMs = parseInt(c.dripFeed.timeInterval) * 60 * 1000;
               return {
                 ...c,
@@ -158,7 +175,7 @@ export default function WhopPhantomPage() {
       }
     };
     
-    const interval = setInterval(processCampaigns, 2000); // Check every 2 seconds
+    const interval = setInterval(processCampaigns, 2000);
     return () => clearInterval(interval);
   }, [campaigns, toast]);
 
@@ -178,6 +195,13 @@ export default function WhopPhantomPage() {
           <CampaignHistory campaigns={campaigns} onCampaignAction={handleCampaignAction} />
         </div>
       </div>
+      {editingCampaign && (
+        <EditCampaignForm
+          campaign={editingCampaign}
+          onUpdate={handleUpdateCampaign}
+          onOpenChange={() => setEditingCampaign(null)}
+        />
+      )}
     </div>
   );
 }

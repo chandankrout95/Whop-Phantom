@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Order } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { Progress } from "../ui/progress";
-import { MoreVertical, Pause, Play, Power, RefreshCcw, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+import { MoreVertical, Pause, Play, Power, RefreshCcw, Shield, ShieldAlert, ShieldCheck, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
@@ -49,11 +49,11 @@ const getStatusVariant = (status: Order['status']) => {
     }
 }
 
-const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart') => void; }) => {
+const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart' | 'edit') => void; }) => {
     const [countdown, setCountdown] = useState(0);
 
     const isDripFeed = !!campaign.dripFeed;
-    const totalQuantity = isDripFeed ? campaign.dripFeed!.totalViews : campaign.quantity;
+    const totalQuantity = isDripFeed ? campaign.quantity : campaign.quantity;
     const currentDelivered = isDripFeed ? campaign.dripFeed!.totalOrdered : 0;
     const completionPercentage = (currentDelivered / totalQuantity) * 100;
     
@@ -121,6 +121,9 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => onAction(campaign.id, 'edit')}>
+                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
                         {campaign.status === 'In Progress' && (
                             <DropdownMenuItem onClick={() => onAction(campaign.id, 'pause')}>
                                 <Pause className="mr-2 h-4 w-4" /> Pause
@@ -149,7 +152,7 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
 }
 
 
-export function CampaignHistory({ campaigns, onCampaignAction }: { campaigns: Order[], onCampaignAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart') => void; }) {
+export function CampaignHistory({ campaigns, onCampaignAction }: { campaigns: Order[], onCampaignAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart' | 'edit') => void; }) {
 
   return (
     <Card className="bg-background/80 backdrop-blur-sm border-border/50 h-full flex flex-col">
