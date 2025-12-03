@@ -18,17 +18,20 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Terminal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { CampaignHistory } from './campaign-history';
 import { Label } from '@/components/ui/label';
 import type { Order } from '@/lib/types';
-import { placeSmmOrder } from '@/app/dashboard/actions';
+import { getSmmServices, placeSmmOrder } from '@/app/dashboard/actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ScrollArea } from '../ui/scroll-area';
 
 
 const phantomFormSchema = z.object({
   campaignName: z.string().min(1, 'Campaign name is required.'),
   videoLink: z.string().url('Please enter a valid video URL.'),
+  serviceId: z.string().min(1, "Please select a service."),
   totalViews: z.coerce.number().min(1, 'Total views must be at least 1.'),
   variant: z.enum(['standard', 'hq', 'premium'], {
     required_error: 'You need to select a variant.',
@@ -61,12 +64,31 @@ export function WhopPhantomForm() {
   const [view, setView] = useState<'form' | 'history'>('form');
   const [campaigns, setCampaigns] = useState<Order[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const fetchedServices = await getSmmServices();
+        setServices(fetchedServices);
+      } catch (error) {
+        toast({
+          title: "Error fetching services",
+          description: "Could not load the list of services from the SMM panel.",
+          variant: "destructive",
+        });
+      }
+    };
+    fetchServices();
+  }, [toast]);
+
 
   const form = useForm<PhantomFormValues>({
     resolver: zodResolver(phantomFormSchema),
     defaultValues: {
       campaignName: '',
       videoLink: '',
+      serviceId: '',
       totalViews: 0,
       variant: 'standard',
       quantityFrom: 0,
@@ -78,15 +100,13 @@ export function WhopPhantomForm() {
   const onSubmit = async (data: PhantomFormValues) => {
     setIsSubmitting(true);
     
-    // For now, let's hardcode a service ID as the form doesn't have a service selector.
-    // Based on the API, '1' is for Followers. We can change this as needed.
-    const serviceId = '1';
+    const selectedService = services.find(s => s.service === data.serviceId);
 
     try {
         const result = await placeSmmOrder({
             link: data.videoLink,
             quantity: data.totalViews,
-            serviceId: serviceId,
+            serviceId: data.serviceId,
         });
 
         if (result.success && result.orderId) {
@@ -96,7 +116,7 @@ export function WhopPhantomForm() {
                 quantity: data.totalViews,
                 status: 'In Progress', // Assuming it starts as 'In Progress'
                 createdAt: new Date().toISOString(),
-                serviceId: serviceId,
+                serviceId: data.serviceId,
                 charge: 0, // We don't have charge info yet from the 'add' call
                 panelId: 'smmsocialmedia', // Identifier for the new panel
                 userId: 'local-user-123',
@@ -108,7 +128,7 @@ export function WhopPhantomForm() {
 
             toast({
                 title: "Order Placed Successfully",
-                description: `Campaign "${data.campaignName}" has started with Order ID: ${result.orderId}.`,
+                description: `Campaign "${data.campaignName}" for "${selectedService?.name}" has started with Order ID: ${result.orderId}.`,
                 variant: 'default'
             });
             form.reset();
@@ -176,12 +196,38 @@ export function WhopPhantomForm() {
                             </FormItem>
                         )}
                     />
+                     <FormField
+                      control={form.control}
+                      name="serviceId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Service</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || services.length === 0}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={services.length > 0 ? "Select a service..." : "Loading services..."} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <ScrollArea className="h-72">
+                                {services.map((service) => (
+                                    <SelectItem key={service.service} value={service.service.toString()}>
+                                    {service.name} (${service.rate}/1k)
+                                    </SelectItem>
+                                ))}
+                                </ScrollArea>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                         control={form.control}
                         name="totalViews"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Total Views</FormLabel>
+                            <FormLabel>Total Quantity</FormLabel>
                             <FormControl>
                                 <Input type="number" placeholder="1000000" {...field} disabled={isSubmitting} />
                             </FormControl>
@@ -291,7 +337,7 @@ export function WhopPhantomForm() {
                     />
 
 
-                    <Button type="submit" className="w-full !mt-6" disabled={isSubmitting}>
+                    <Button type="submit" className="w-full !mt-6" disabled={isSubmitting || services.length === 0}>
                         {isSubmitting ? 'Submitting...' : 'Start Botting'}
                     </Button>
                 </form>

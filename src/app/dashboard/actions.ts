@@ -113,3 +113,43 @@ export async function placeSmmOrder(input: z.infer<typeof smmOrderSchema>) {
     return { success: false, error: errorMessage };
   }
 }
+
+export async function getSmmServices(): Promise<any[]> {
+    const apiKey = '36bbdaa97891ea83435249ebf1151bbe';
+    const apiUrl = 'https://smmsocialmedia.in/api/v2';
+
+    const params = new URLSearchParams({
+        key: apiKey,
+        action: 'services',
+    });
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString(),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("SMM API Error Response (getServices):", errorText);
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!Array.isArray(data)) {
+            console.error("Unexpected response format for services:", data);
+            throw new Error("Received an unexpected format from the services API.");
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Failed to fetch SMM services:', error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        // In a real app, you might want to return an empty array or handle this more gracefully
+        throw new Error(errorMessage);
+    }
+}
