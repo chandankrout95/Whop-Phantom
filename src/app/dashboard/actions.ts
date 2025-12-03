@@ -55,3 +55,61 @@ export async function getRoutingRecommendation(input: z.infer<typeof recommendat
     throw new Error("Failed to get a recommendation from the AI service.");
   }
 }
+
+
+const smmOrderSchema = z.object({
+  link: z.string().url(),
+  quantity: z.number().min(1),
+  serviceId: z.string().min(1),
+});
+
+export async function placeSmmOrder(input: z.infer<typeof smmOrderSchema>) {
+  const validation = smmOrderSchema.safeParse(input);
+  if (!validation.success) {
+    throw new Error("Invalid input to place SMM order.");
+  }
+
+  const apiKey = '36bbdaa97891ea83435249ebf1151bbe';
+  const apiUrl = 'https://smmsocialmedia.in/api/v2';
+
+  const params = new URLSearchParams({
+    key: apiKey,
+    action: 'add',
+    service: input.serviceId,
+    link: input.link,
+    quantity: input.quantity.toString(),
+  });
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error("SMM API Error Response:", errorText);
+        throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    if (!data.order) {
+        throw new Error("API response did not include an order ID.");
+    }
+
+    return { success: true, orderId: data.order };
+
+  } catch (error) {
+    console.error('Failed to place SMM order:', error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+    return { success: false, error: errorMessage };
+  }
+}

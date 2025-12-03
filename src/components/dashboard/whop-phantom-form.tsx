@@ -23,6 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { CampaignHistory } from './campaign-history';
 import { Label } from '@/components/ui/label';
 import type { Order } from '@/lib/types';
+import { placeSmmOrder } from '@/app/dashboard/actions';
 
 
 const phantomFormSchema = z.object({
@@ -59,6 +60,7 @@ export function WhopPhantomForm() {
   const { toast } = useToast();
   const [view, setView] = useState<'form' | 'history'>('form');
   const [campaigns, setCampaigns] = useState<Order[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<PhantomFormValues>({
     resolver: zodResolver(phantomFormSchema),
@@ -73,30 +75,57 @@ export function WhopPhantomForm() {
     },
   });
 
-  const onSubmit = (data: PhantomFormValues) => {
-    const newCampaign: Order = {
-        id: `order-${Date.now()}`,
-        link: data.videoLink,
-        quantity: data.totalViews,
-        status: 'In Progress',
-        createdAt: new Date().toISOString(),
-        // Mocking other required fields for now
-        serviceId: 'svc-phantom',
-        charge: 0,
-        panelId: 'panel-phantom',
-        userId: 'local-user-123',
-        antiCheatStatus: 'MONITORING',
-        flagged: false,
-    };
+  const onSubmit = async (data: PhantomFormValues) => {
+    setIsSubmitting(true);
+    
+    // For now, let's hardcode a service ID as the form doesn't have a service selector.
+    // Based on the API, '1' is for Followers. We can change this as needed.
+    const serviceId = '1';
 
-    setCampaigns(prev => [newCampaign, ...prev]);
+    try {
+        const result = await placeSmmOrder({
+            link: data.videoLink,
+            quantity: data.totalViews,
+            serviceId: serviceId,
+        });
 
-    toast({
-        title: "Task Initiated",
-        description: `Botting campaign "${data.campaignName}" has started.`,
-        variant: 'default'
-    });
-    form.reset();
+        if (result.success && result.orderId) {
+            const newCampaign: Order = {
+                id: result.orderId.toString(),
+                link: data.videoLink,
+                quantity: data.totalViews,
+                status: 'In Progress', // Assuming it starts as 'In Progress'
+                createdAt: new Date().toISOString(),
+                serviceId: serviceId,
+                charge: 0, // We don't have charge info yet from the 'add' call
+                panelId: 'smmsocialmedia', // Identifier for the new panel
+                userId: 'local-user-123',
+                antiCheatStatus: 'MONITORING',
+                flagged: false,
+            };
+
+            setCampaigns(prev => [newCampaign, ...prev]);
+
+            toast({
+                title: "Order Placed Successfully",
+                description: `Campaign "${data.campaignName}" has started with Order ID: ${result.orderId}.`,
+                variant: 'default'
+            });
+            form.reset();
+        } else {
+            throw new Error(result.error || 'Failed to place order.');
+        }
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({
+            title: "Error Placing Order",
+            description: errorMessage,
+            variant: 'destructive'
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -128,7 +157,7 @@ export function WhopPhantomForm() {
                             <FormItem>
                             <FormLabel>Campaign Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g., Viral Video Push" {...field} />
+                                <Input placeholder="e.g., Viral Video Push" {...field} disabled={isSubmitting} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -141,7 +170,7 @@ export function WhopPhantomForm() {
                             <FormItem>
                             <FormLabel>Video Link</FormLabel>
                             <FormControl>
-                                <Input type="url" placeholder="https://youtube.com/watch?v=..." {...field} />
+                                <Input type="url" placeholder="https://youtube.com/watch?v=..." {...field} disabled={isSubmitting} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -154,7 +183,7 @@ export function WhopPhantomForm() {
                             <FormItem>
                             <FormLabel>Total Views</FormLabel>
                             <FormControl>
-                                <Input type="number" placeholder="1000000" {...field} />
+                                <Input type="number" placeholder="1000000" {...field} disabled={isSubmitting} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -175,19 +204,19 @@ export function WhopPhantomForm() {
                                 >
                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                     <FormControl>
-                                    <RadioGroupItem value="standard" />
+                                    <RadioGroupItem value="standard" disabled={isSubmitting} />
                                     </FormControl>
                                     <FormLabel className="font-normal">Standard</FormLabel>
                                 </FormItem>
                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                     <FormControl>
-                                    <RadioGroupItem value="hq" />
+                                    <RadioGroupItem value="hq" disabled={isSubmitting} />
                                     </FormControl>
                                     <FormLabel className="font-normal">HQ</FormLabel>
                                 </FormItem>
                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                     <FormControl>
-                                    <RadioGroupItem value="premium" />
+                                    <RadioGroupItem value="premium" disabled={isSubmitting} />
                                     </FormControl>
                                     <FormLabel className="font-normal">Premium</FormLabel>
                                 </FormItem>
@@ -206,7 +235,7 @@ export function WhopPhantomForm() {
                                 <FormItem>
                                 <FormLabel>Qty From</FormLabel>
                                 <FormControl>
-                                    <Input type="number" placeholder="100" {...field} />
+                                    <Input type="number" placeholder="100" {...field} disabled={isSubmitting} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -219,7 +248,7 @@ export function WhopPhantomForm() {
                                 <FormItem>
                                 <FormLabel>Qty To</FormLabel>
                                 <FormControl>
-                                    <Input type="number" placeholder="500" {...field} />
+                                    <Input type="number" placeholder="500" {...field} disabled={isSubmitting} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -242,11 +271,12 @@ export function WhopPhantomForm() {
                             {timeIntervals.map((interval) => (
                                 <FormItem key={interval.value} className="flex items-center">
                                 <FormControl>
-                                    <RadioGroupItem value={interval.value} className="sr-only" />
+                                    <RadioGroupItem value={interval.value} className="sr-only" disabled={isSubmitting} />
                                 </FormControl>
                                 <FormLabel className={cn(
                                     "flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 font-normal hover:bg-accent hover:text-accent-foreground w-full cursor-pointer",
-                                    field.value === interval.value && "border-primary"
+                                    field.value === interval.value && "border-primary",
+                                    isSubmitting && "cursor-not-allowed opacity-50"
                                 )}>
                                     <span className="font-bold text-lg">{interval.label}</span>
                                     <span className="text-xs text-muted-foreground">{interval.subLabel}</span>
@@ -261,8 +291,8 @@ export function WhopPhantomForm() {
                     />
 
 
-                    <Button type="submit" className="w-full !mt-6">
-                        Start Botting
+                    <Button type="submit" className="w-full !mt-6" disabled={isSubmitting}>
+                        {isSubmitting ? 'Submitting...' : 'Start Botting'}
                     </Button>
                 </form>
                 </Form>
