@@ -21,20 +21,34 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ArrowRight } from 'lucide-react';
+import { useNewOrder } from '@/context/new-order-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 
 const formSchema = z.object({
-  platform: z.enum(['youtube', 'tiktok', 'instagram', 'twitter-x']),
+  platform: z.enum(['youtube', 'tiktok', 'instagram', 'twitter', 'all']),
 });
 
 export function NewOrderForm() {
+  const { platform, setPlatform } = useNewOrder();
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+        platform: platform || 'all',
+    }
   });
 
+  useEffect(() => {
+    form.setValue('platform', platform);
+  }, [platform, form]);
+
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Further actions will be implemented later
+    setPlatform(values.platform);
+    router.push('/dashboard/whop-phantom');
   }
 
   return (
@@ -47,17 +61,24 @@ export function NewOrderForm() {
             render={({ field }) => (
               <FormItem className="flex flex-grow items-center gap-4 space-y-0">
                 <FormLabel className="text-lg text-primary whitespace-nowrap">Platform:</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={(value) => {
+                    field.onChange(value);
+                    setPlatform(value as z.infer<typeof formSchema>['platform']);
+                    if (router) {
+                        router.push('/dashboard/whop-phantom');
+                    }
+                }} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a platform..." />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem value="all">All Platforms</SelectItem>
                     <SelectItem value="youtube">YouTube</SelectItem>
                     <SelectItem value="tiktok">Tiktok</SelectItem>
                     <SelectItem value="instagram">Instagram</SelectItem>
-                    <SelectItem value="twitter-x">Twitter (X)</SelectItem>
+                    <SelectItem value="twitter">Twitter (X)</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

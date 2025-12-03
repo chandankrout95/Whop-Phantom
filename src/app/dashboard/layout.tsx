@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { AuthProvider } from '@/hooks/use-auth';
 import { NewOrderForm } from '@/components/dashboard/new-order-form';
+import { NewOrderProvider } from '@/context/new-order-context';
 
 function DashboardRootLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -67,7 +68,9 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      <DashboardRootLayout>{children}</DashboardRootLayout>
+        <NewOrderProvider>
+            <DashboardRootLayout>{children}</DashboardRootLayout>
+        </NewOrderProvider>
     </AuthProvider>
   );
 }

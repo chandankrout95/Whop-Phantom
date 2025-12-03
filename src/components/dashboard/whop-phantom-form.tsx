@@ -18,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Terminal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { CampaignHistory } from './campaign-history';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,7 @@ import type { Order } from '@/lib/types';
 import { getSmmServices, placeSmmOrder } from '@/app/dashboard/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ScrollArea } from '../ui/scroll-area';
+import { useNewOrder } from '@/context/new-order-context';
 
 
 const phantomFormSchema = z.object({
@@ -65,6 +66,7 @@ export function WhopPhantomForm() {
   const [campaigns, setCampaigns] = useState<Order[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [services, setServices] = useState<any[]>([]);
+  const { platform } = useNewOrder();
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -81,6 +83,16 @@ export function WhopPhantomForm() {
     };
     fetchServices();
   }, [toast]);
+
+  const filteredServices = useMemo(() => {
+    if (platform === 'all' || !platform) {
+      return services;
+    }
+    // Matching logic for platform names, e.g. "youtube" should match "YouTube" category
+    return services.filter(service => 
+      service.category.toLowerCase().includes(platform.toLowerCase())
+    );
+  }, [services, platform]);
 
 
   const form = useForm<PhantomFormValues>({
@@ -183,6 +195,7 @@ export function WhopPhantomForm() {
                             </FormItem>
                         )}
                     />
+                   
                     <FormField
                         control={form.control}
                         name="videoLink"
@@ -202,7 +215,7 @@ export function WhopPhantomForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Service</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || services.length === 0}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || filteredServices.length === 0}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder={services.length > 0 ? "Select a service..." : "Loading services..."} />
@@ -210,7 +223,7 @@ export function WhopPhantomForm() {
                             </FormControl>
                             <SelectContent>
                                 <ScrollArea className="h-72">
-                                {services.map((service) => (
+                                {filteredServices.map((service) => (
                                     <SelectItem key={service.service} value={service.service.toString()}>
                                     {service.name} (${service.rate}/1k)
                                     </SelectItem>
@@ -349,7 +362,3 @@ export function WhopPhantomForm() {
     </div>
   );
 }
-
-    
-
-    
