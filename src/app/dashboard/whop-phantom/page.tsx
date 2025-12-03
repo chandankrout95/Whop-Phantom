@@ -14,6 +14,26 @@ export default function WhopPhantomPage() {
   const [campaigns, setCampaigns] = useState<Order[]>([]);
   const { toast } = useToast();
 
+  useEffect(() => {
+    try {
+      const savedCampaigns = localStorage.getItem('phantomCampaigns');
+      if (savedCampaigns) {
+        setCampaigns(JSON.parse(savedCampaigns));
+      }
+    } catch (error) {
+        console.error("Could not read campaigns from localStorage", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+        localStorage.setItem('phantomCampaigns', JSON.stringify(campaigns));
+    } catch (error) {
+        console.error("Could not save campaigns to localStorage", error);
+    }
+  }, [campaigns]);
+
+
   const handleCampaignAction = useCallback((campaignId: string, action: 'pause' | 'resume' | 'stop' | 'restart') => {
     setCampaigns(prev => prev.map(c => {
       if (c.id === campaignId) {
@@ -51,80 +71,94 @@ export default function WhopPhantomPage() {
   useEffect(() => {
     const processCampaigns = async () => {
       const now = Date.now();
-      let updated = false;
-      const campaignsToProcess = campaigns.filter(c => c.status === 'In Progress' && c.dripFeed && c.dripFeed.nextRun <= now);
+      
+      // Find the first campaign that needs processing
+      const campaignToProcess = campaigns.find(c => 
+        c.status === 'In Progress' && 
+        c.dripFeed && 
+        c.dripFeed.nextRun <= now &&
+        c.dripFeed.totalOrdered < c.dripFeed.totalViews
+      );
 
-      for (const campaign of campaignsToProcess) {
-        if (!campaign.dripFeed || campaign.dripFeed.totalOrdered >= campaign.dripFeed.totalViews) {
-            setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, status: 'Completed' } : c));
-            updated = true;
-            continue;
-        }
+      if (!campaignToProcess || !campaignToProcess.dripFeed) {
+        return;
+      }
+      
+      const campaignId = campaignToProcess.id;
+      const drip = campaignToProcess.dripFeed;
+      
+      // Mark this campaign as being processed by updating its nextRun time immediately
+      // This prevents it from being picked up again in the next interval check
+      setCampaigns(prev => prev.map(c => 
+          c.id === campaignId && c.dripFeed 
+          ? { ...c, dripFeed: { ...c.dripFeed, nextRun: now + 5000 } } 
+          : c
+      ));
 
-        const drip = campaign.dripFeed;
-        const quantity = Math.floor(Math.random() * (drip.quantityTo - drip.quantityFrom + 1) + drip.quantityFrom);
-        let quantityToOrder = quantity;
+      const quantity = Math.floor(Math.random() * (drip.quantityTo - drip.quantityFrom + 1) + drip.quantityFrom);
+      let quantityToOrder = quantity;
 
-        if (drip.totalOrdered + quantity > drip.totalViews) {
-            quantityToOrder = drip.totalViews - drip.totalOrdered;
-        }
+      if (drip.totalOrdered + quantity > drip.totalViews) {
+        quantityToOrder = drip.totalViews - drip.totalOrdered;
+      }
 
-        if (quantityToOrder <= 0) {
-             setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, status: 'Completed' } : c));
-             updated = true;
-             continue;
-        }
+      if (quantityToOrder <= 0) {
+        setCampaigns(prev => prev.map(c => 
+          c.id === campaignId ? { ...c, status: 'Completed' } : c
+        ));
+        return;
+      }
 
-        console.log(`Placing order for campaign ${campaign.id}: ${quantityToOrder} views`);
+      console.log(`Placing order for campaign ${campaignId}: ${quantityToOrder} views`);
 
-        try {
-            const result = await placeSmmOrder({
-                link: campaign.link,
-                quantity: quantityToOrder,
-                serviceId: campaign.serviceId,
-            });
+      try {
+        const result = await placeSmmOrder({
+          link: campaignToProcess.link,
+          quantity: quantityToOrder,
+          serviceId: campaignToProcess.serviceId,
+        });
 
-            if (result.success) {
-                toast({
-                    title: "Drip-Feed Order Placed",
-                    description: `Order ID ${result.orderId} for ${quantityToOrder} views placed for campaign ${campaign.id}.`,
-                });
+        if (result.success) {
+          toast({
+            title: "Drip-Feed Order Placed",
+            description: `Order ID ${result.orderId} for ${quantityToOrder} views placed for campaign ${campaignId}.`,
+          });
 
-                setCampaigns(prev => prev.map(c => {
-                    if (c.id === campaign.id && c.dripFeed) {
-                        const newTotalOrdered = c.dripFeed.totalOrdered + quantityToOrder;
-                        const newStatus = newTotalOrdered >= c.dripFeed.totalViews ? 'Completed' : 'In Progress';
-                        return {
-                            ...c,
-                            status: newStatus,
-                            dripFeed: {
-                                ...c.dripFeed,
-                                totalOrdered: newTotalOrdered,
-                                nextRun: Date.now() + (parseInt(c.dripFeed.timeInterval) * 60 * 1000),
-                                runs: c.dripFeed.runs + 1,
-                            }
-                        };
-                    }
-                    return c;
-                }));
-                updated = true;
-
-            } else {
-                 throw new Error(result.error || 'An unknown error occurred.');
+          // Final state update after successful API call
+          setCampaigns(prev => prev.map(c => {
+            if (c.id === campaignId && c.dripFeed) {
+              const newTotalOrdered = c.dripFeed.totalOrdered + quantityToOrder;
+              const newStatus = newTotalOrdered >= c.dripFeed.totalViews ? 'Completed' : 'In Progress';
+              const timeIntervalMs = parseInt(c.dripFeed.timeInterval) * 60 * 1000;
+              return {
+                ...c,
+                status: newStatus,
+                dripFeed: {
+                  ...c.dripFeed,
+                  totalOrdered: newTotalOrdered,
+                  nextRun: Date.now() + timeIntervalMs,
+                  runs: c.dripFeed.runs + 1,
+                }
+              };
             }
-        } catch(error: any) {
-             toast({
-                title: "Drip-Feed Order Failed",
-                description: error.message,
-                variant: 'destructive'
-            });
-             setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, status: 'Stopped' } : c));
-             updated = true;
+            return c;
+          }));
+        } else {
+          throw new Error(result.error || 'An unknown error occurred.');
         }
+      } catch(error: any) {
+        toast({
+          title: "Drip-Feed Order Failed",
+          description: `Campaign ${campaignId}: ${error.message}`,
+          variant: 'destructive'
+        });
+        setCampaigns(prev => prev.map(c => 
+          c.id === campaignId ? { ...c, status: 'Stopped' } : c
+        ));
       }
     };
     
-    const interval = setInterval(processCampaigns, 5000); // Check every 5 seconds
+    const interval = setInterval(processCampaigns, 2000); // Check every 2 seconds
     return () => clearInterval(interval);
   }, [campaigns, toast]);
 
