@@ -60,10 +60,15 @@ const timeIntervals = [
     { value: '60', label: '60 min', subLabel: 'Maximum' },
 ];
 
-export function WhopPhantomForm() {
+export function WhopPhantomForm({
+  campaigns,
+  setCampaigns,
+}: {
+  campaigns: Order[];
+  setCampaigns: React.Dispatch<React.SetStateAction<Order[]>>;
+}) {
   const { toast } = useToast();
   const [view, setView] = useState<'form' | 'history'>('form');
-  const [campaigns, setCampaigns] = useState<Order[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [services, setServices] = useState<any[]>([]);
   const { platform } = useNewOrder();

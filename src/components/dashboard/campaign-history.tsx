@@ -115,12 +115,12 @@ const CampaignRow = ({ campaign }: { campaign: Order }) => {
 export function CampaignHistory({ campaigns }: { campaigns: Order[] }) {
 
   return (
-    <Card className="bg-background/80 backdrop-blur-sm border-border/50">
+    <Card className="bg-background/80 backdrop-blur-sm border-border/50 h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="text-foreground">Views Campaign History</CardTitle>
-        <CardDescription>A log of your recent botting campaigns.</CardDescription>
+        <CardTitle className="text-foreground">Live Campaign History</CardTitle>
+        <CardDescription>A live log of your botting campaigns from this session.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow overflow-y-auto">
         {campaigns.length > 0 ? (
           <Table>
             <TableHeader>
