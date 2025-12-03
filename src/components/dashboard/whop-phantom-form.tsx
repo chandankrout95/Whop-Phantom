@@ -30,6 +30,7 @@ import { ScrollArea } from '../ui/scroll-area';
 
 const phantomFormSchema = z.object({
   campaignName: z.string().min(1, 'Campaign name is required.'),
+  favServiceName: z.string().optional(),
   videoLink: z.string().url('Please enter a valid video URL.'),
   serviceId: z.string().min(1, "Please select a service."),
   totalViews: z.coerce.number().min(1, 'Total views must be at least 1.'),
@@ -87,6 +88,7 @@ export function WhopPhantomForm() {
     resolver: zodResolver(phantomFormSchema),
     defaultValues: {
       campaignName: '',
+      favServiceName: '',
       videoLink: '',
       serviceId: '',
       totalViews: 0,
@@ -178,6 +180,19 @@ export function WhopPhantomForm() {
                             <FormLabel>Campaign Name</FormLabel>
                             <FormControl>
                                 <Input placeholder="e.g., Viral Video Push" {...field} disabled={isSubmitting} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="favServiceName"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Fav Service Name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., My Favorite YT Views" {...field} disabled={isSubmitting} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -349,5 +364,7 @@ export function WhopPhantomForm() {
     </div>
   );
 }
+
+    
 
     
