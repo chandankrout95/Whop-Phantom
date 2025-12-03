@@ -22,7 +22,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import type { Order } from '@/lib/types';
-import { getSmmServices, placeSmmOrder } from '@/app/dashboard/actions';
+import { getSmmServices } from '@/app/dashboard/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ScrollArea } from '../ui/scroll-area';
 import { useNewOrder } from '@/context/new-order-context';
@@ -31,6 +31,7 @@ import { CampaignHistory } from './campaign-history';
 
 const phantomFormSchema = z.object({
   campaignName: z.string().min(1, 'Campaign name is required.'),
+  favServiceName: z.string().optional(),
   videoLink: z.string().url('Please enter a valid video URL.'),
   serviceId: z.string().min(1, "Please select a service."),
   totalViews: z.coerce.number().min(1, 'Total views must be at least 1.'),
@@ -61,10 +62,8 @@ const timeIntervals = [
 ];
 
 export function WhopPhantomForm({
-  campaigns,
   setCampaigns,
 }: {
-  campaigns: Order[];
   setCampaigns: React.Dispatch<React.SetStateAction<Order[]>>;
 }) {
   const { toast } = useToast();
@@ -113,6 +112,7 @@ export function WhopPhantomForm({
     resolver: zodResolver(phantomFormSchema),
     defaultValues: {
       campaignName: '',
+      favServiceName: '',
       videoLink: '',
       serviceId: '',
       totalViews: 1000,
@@ -143,7 +143,7 @@ export function WhopPhantomForm({
           ...data,
           totalOrdered: 0,
           runs: 0,
-          nextRun: Date.now() + (parseInt(data.timeInterval) * 60 * 1000)
+          nextRun: Date.now() + 5000 // Start first run after 5 seconds
         }
     };
 
@@ -163,206 +163,208 @@ export function WhopPhantomForm({
             <div className="flex items-center gap-2">
                 <Terminal className="h-5 w-5 text-primary" />
                 <h1 className="text-lg text-primary">
-                    {view === 'form' ? 'PHANTOM_CONTROLS' : 'CAMPAIGN_HISTORY'}
+                    PHANTOM_CONTROLS
                 </h1>
-            </div>
-            <div className="flex items-center gap-2">
-                <Label htmlFor="view-switch" className="text-sm text-muted-foreground">History</Label>
-                <Switch 
-                    id="view-switch"
-                    checked={view === 'history'}
-                    onCheckedChange={(checked) => setView(checked ? 'history' : 'form')}
-                />
             </div>
         </div>
         <div className="p-4">
-            {view === 'form' ? (
-                <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="campaignName"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Campaign Name</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., Viral Video Push" {...field} disabled={isSubmitting} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                   
-                    <FormField
-                        control={form.control}
-                        name="videoLink"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Video Link</FormLabel>
-                            <FormControl>
-                                <Input type="url" placeholder="https://youtube.com/watch?v=..." {...field} disabled={isSubmitting} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="serviceId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Service</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || services.length === 0}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder={services.length > 0 ? "Select a service..." : "Loading services..."} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <div className="p-2">
-                                  <Input 
-                                    placeholder="Search services..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full"
-                                  />
-                                </div>
-                                <ScrollArea className="h-72">
-                                {filteredServices.map((service) => (
-                                    <SelectItem key={service.service} value={service.service.toString()}>
-                                    {service.name} (${service.rate}/1k)
-                                    </SelectItem>
-                                ))}
-                                </ScrollArea>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="totalViews"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Total Quantity</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="1000000" {...field} disabled={isSubmitting} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="variant"
-                        render={({ field }) => (
-                            <FormItem className="space-y-3">
-                            <FormLabel>Variants</FormLabel>
-                            <FormControl>
-                                <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                className="flex flex-col space-y-1"
-                                >
-                                <FormItem className="flex items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                    <RadioGroupItem value="standard" disabled={isSubmitting} />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">Standard</FormLabel>
-                                </FormItem>
-                                <FormItem className="flex items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                    <RadioGroupItem value="hq" disabled={isSubmitting} />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">HQ</FormLabel>
-                                </FormItem>
-                                <FormItem className="flex items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                    <RadioGroupItem value="premium" disabled={isSubmitting} />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">Premium</FormLabel>
-                                </FormItem>
-                                </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <FormField
-                            control={form.control}
-                            name="quantityFrom"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Qty From</FormLabel>
-                                <FormControl>
-                                    <Input type="number" placeholder="100" {...field} disabled={isSubmitting} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="quantityTo"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Qty To</FormLabel>
-                                <FormControl>
-                                    <Input type="number" placeholder="500" {...field} disabled={isSubmitting} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-
-                    <FormField
+            <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
                     control={form.control}
-                    name="timeInterval"
+                    name="campaignName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Campaign Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Viral Video Push" {...field} disabled={isSubmitting} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="favServiceName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Fav Service Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., My Favorite YT Views" {...field} disabled={isSubmitting} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+               
+                <FormField
+                    control={form.control}
+                    name="videoLink"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Video Link</FormLabel>
+                        <FormControl>
+                            <Input type="url" placeholder="https://youtube.com/watch?v=..." {...field} disabled={isSubmitting} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="serviceId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || services.length === 0}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={services.length > 0 ? "Select a service..." : "Loading services..."} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <div className="p-2">
+                              <Input 
+                                placeholder="Search services..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full"
+                              />
+                            </div>
+                            <ScrollArea className="h-72">
+                            {filteredServices.map((service) => (
+                                <SelectItem key={service.service} value={service.service.toString()}>
+                                {service.name} (${service.rate}/1k)
+                                </SelectItem>
+                            ))}
+                            </ScrollArea>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                    control={form.control}
+                    name="totalViews"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Total Quantity</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="1000000" {...field} disabled={isSubmitting} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="variant"
                     render={({ field }) => (
                         <FormItem className="space-y-3">
-                        <FormLabel>Time Interval</FormLabel>
+                        <FormLabel>Variants</FormLabel>
                         <FormControl>
                             <RadioGroup
                             onValueChange={field.onChange}
                             defaultValue={field.value}
-                            className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                            className="flex flex-col space-y-1"
                             >
-                            {timeIntervals.map((interval) => (
-                                <FormItem key={interval.value} className="flex items-center">
+                            <FormItem className="flex items-center space-x-3 space-y-0">
                                 <FormControl>
-                                    <RadioGroupItem value={interval.value} className="sr-only" disabled={isSubmitting} />
+                                <RadioGroupItem value="standard" disabled={isSubmitting} />
                                 </FormControl>
-                                <FormLabel className={cn(
-                                    "flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 font-normal hover:bg-accent hover:text-accent-foreground w-full cursor-pointer",
-                                    field.value === interval.value && "border-primary",
-                                    isSubmitting && "cursor-not-allowed opacity-50"
-                                )}>
-                                    <span className="font-bold text-lg">{interval.label}</span>
-                                    <span className="text-xs text-muted-foreground">{interval.subLabel}</span>
-                                </FormLabel>
-                                </FormItem>
-                            ))}
+                                <FormLabel className="font-normal">Standard</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="hq" disabled={isSubmitting} />
+                                </FormControl>
+                                <FormLabel className="font-normal">HQ</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="premium" disabled={isSubmitting} />
+                                </FormControl>
+                                <FormLabel className="font-normal">Premium</FormLabel>
+                            </FormItem>
                             </RadioGroup>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
+                />
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <FormField
+                        control={form.control}
+                        name="quantityFrom"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Qty From</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="100" {...field} disabled={isSubmitting} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
                     />
+                    <FormField
+                        control={form.control}
+                        name="quantityTo"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Qty To</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="500" {...field} disabled={isSubmitting} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
+                <FormField
+                control={form.control}
+                name="timeInterval"
+                render={({ field }) => (
+                    <FormItem className="space-y-3">
+                    <FormLabel>Time Interval</FormLabel>
+                    <FormControl>
+                        <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                        >
+                        {timeIntervals.map((interval) => (
+                            <FormItem key={interval.value} className="flex items-center">
+                            <FormControl>
+                                <RadioGroupItem value={interval.value} className="sr-only" disabled={isSubmitting} />
+                            </FormControl>
+                            <FormLabel className={cn(
+                                "flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 font-normal hover:bg-accent hover:text-accent-foreground w-full cursor-pointer",
+                                field.value === interval.value && "border-primary",
+                                isSubmitting && "cursor-not-allowed opacity-50"
+                            )}>
+                                <span className="font-bold text-lg">{interval.label}</span>
+                                <span className="text-xs text-muted-foreground">{interval.subLabel}</span>
+                            </FormLabel>
+                            </FormItem>
+                        ))}
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
 
 
-                    <Button type="submit" className="w-full !mt-8 text-lg" size="lg" disabled={isSubmitting || services.length === 0}>
-                        {isSubmitting ? 'Submitting...' : 'Create Campaign'}
-                    </Button>
-                </form>
-                </Form>
-            ) : (
-                <CampaignHistory campaigns={campaigns} />
-            )}
+                <Button type="submit" className="w-full !mt-8 text-lg" size="lg" disabled={isSubmitting || services.length === 0}>
+                    {isSubmitting ? 'Submitting...' : 'Create Campaign'}
+                </Button>
+            </form>
+            </Form>
         </div>
     </div>
   );

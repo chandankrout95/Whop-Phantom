@@ -124,7 +124,7 @@ export default function WhopPhantomPage() {
       <div className="relative z-10 flex h-full flex-col gap-4 p-4 md:p-8">
         <div className="grid flex-shrink-0 grid-cols-1 items-start gap-4 md:grid-cols-2">
           <div className="h-[90vh] overflow-hidden">
-            <WhopPhantomForm campaigns={campaigns} setCampaigns={setCampaigns} />
+            <WhopPhantomForm setCampaigns={setCampaigns} />
           </div>
           <div className="h-[90vh] overflow-hidden">
             <PhantomDashboard />
