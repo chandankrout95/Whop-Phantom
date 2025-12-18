@@ -54,4 +54,5 @@ export type NavItem = {
   title: string;
   icon: React.ElementType;
   active?: boolean;
+  locked?: boolean;
 }

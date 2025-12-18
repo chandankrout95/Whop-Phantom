@@ -26,14 +26,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import type { NavItem } from '@/lib/types';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
+import { useState } from 'react';
+import { PinLockDialog } from '../pin-lock-dialog';
+
 
 const navItems: NavItem[] = [
-  { href: '/dashboard', title: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/new-order', title: 'New Order', icon: PlusCircle },
-  { href: '/dashboard/orders', title: 'Orders', icon: ListOrdered },
-  { href: '/dashboard/services', title: 'Services', icon: Package },
-  { href: '/dashboard/panels', title: 'Panels', icon: Server },
-  { href: '/dashboard/whop-phantom', title: 'Whop Phantom', icon: Ghost },
+  { href: '/dashboard', title: 'Dashboard', icon: LayoutDashboard, locked: true },
+  { href: '/dashboard/new-order', title: 'New Order', icon: PlusCircle, locked: true },
+  { href: '/dashboard/orders', title: 'Orders', icon: ListOrdered, locked: true },
+  { href: '/dashboard/services', title: 'Services', icon: Package, locked: true },
+  { href: '/dashboard/panels', title: 'Panels', icon: Server, locked: true },
+  { href: '/dashboard/whop-phantom', title: 'Whop Phantom', icon: Ghost, locked: false },
 ];
 
 export function AppSidebar() {
@@ -42,10 +45,42 @@ export function AppSidebar() {
   const { setOpen } = useSidebar();
   const router = useRouter();
 
+  const [pinTarget, setPinTarget] = useState<string | null>(null);
+  const [isPinDialogOpen, setIsPinDialogOpen] = useState(false);
+
   const handleSignOut = () => {
     logout();
     router.push('/login');
   };
+
+  const isPinUnlocked = () => {
+    try {
+        return sessionStorage.getItem('pin-unlocked') === 'true';
+    } catch(e) {
+        return false;
+    }
+  }
+
+  const handleNavClick = (e: React.MouseEvent, item: NavItem) => {
+    if (item.locked && !isPinUnlocked()) {
+      e.preventDefault();
+      setPinTarget(item.href);
+      setIsPinDialogOpen(true);
+    }
+  }
+
+  const handlePinSuccess = () => {
+    try {
+        sessionStorage.setItem('pin-unlocked', 'true');
+    } catch(e) {
+        // ignore
+    }
+    if (pinTarget) {
+      router.push(pinTarget);
+    }
+    setIsPinDialogOpen(false);
+    setPinTarget(null);
+  }
 
 
   return (
@@ -64,7 +99,7 @@ export function AppSidebar() {
                 isActive={pathname === item.href}
                 tooltip={item.title}
               >
-                <Link href={item.href}>
+                <Link href={item.href} onClick={(e) => handleNavClick(e, item)}>
                   <item.icon />
                   <span>{item.title}</span>
                 </Link>
@@ -101,6 +136,11 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      <PinLockDialog 
+        isOpen={isPinDialogOpen}
+        onOpenChange={setIsPinDialogOpen}
+        onSuccess={handlePinSuccess}
+      />
     </>
   );
 }
