@@ -1,3 +1,4 @@
+
 import { FieldValue } from "firebase/firestore";
 
 export type Panel = {
@@ -23,6 +24,7 @@ type DripFeedData = {
     campaignName: string;
     videoLink: string;
     serviceId: string;
+    version: string;
     totalViews: number;
     variant: "standard" | "hq" | "premium";
     quantityFrom: number;
@@ -56,3 +58,5 @@ export type NavItem = {
   active?: boolean;
   locked?: boolean;
 }
+
+    

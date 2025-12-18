@@ -32,6 +32,7 @@ const phantomFormSchema = z.object({
   campaignName: z.string().min(1, 'Campaign name is required.'),
   videoLink: z.string().url('Please enter a valid video URL.'),
   serviceId: z.string().min(1, "Please select a service."),
+  version: z.string().min(1, 'Version is required.'),
   totalViews: z.coerce.number().min(1, 'Total views must be at least 1.'),
   variant: z.enum(['standard', 'hq', 'premium'], {
     required_error: 'You need to select a variant.',
@@ -128,6 +129,7 @@ export function WhopPhantomForm({
       campaignName: '',
       videoLink: '',
       serviceId: '',
+      version: '',
       totalViews: 1000,
       variant: 'standard',
       quantityFrom: 100,
@@ -260,6 +262,19 @@ export function WhopPhantomForm({
                 />
                 <FormField
                     control={form.control}
+                    name="version"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Version</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., v1.0" {...field} disabled={isSubmitting} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
                     name="totalViews"
                     render={({ field }) => (
                         <FormItem>
@@ -382,3 +397,5 @@ export function WhopPhantomForm({
     </div>
   );
 }
+
+    
