@@ -32,7 +32,7 @@ const phantomFormSchema = z.object({
   campaignName: z.string().min(1, 'Campaign name is required.'),
   videoLink: z.string().url('Please enter a valid video URL.'),
   serviceId: z.string().min(1, "Please select a service."),
-  version: z.string().min(1, 'Version is required.'),
+  version: z.string(), // This is now a shortcut selector, validation can be optional
   totalViews: z.coerce.number().min(1, 'Total views must be at least 1.'),
   variant: z.enum(['standard', 'hq', 'premium'], {
     required_error: 'You need to select a variant.',
@@ -59,6 +59,12 @@ const timeIntervals = [
     { value: '30', label: '30 min', subLabel: 'Very Safe' },
     { value: '60', label: '60 min', subLabel: 'Maximum' },
 ];
+
+const versionShortcuts = [
+  { value: '13426', label: 'VIEWS + REELS [PLAYS + REACH]' },
+  { value: '13369', label: 'VIEWS + REELS [AD VIEWS - GLOBAL]' },
+  { value: '13368', label: 'VIEWS + REELS [INDIA- GLOBAL]' },
+]
 
 export function WhopPhantomForm({
   setCampaigns,
@@ -218,7 +224,7 @@ export function WhopPhantomForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Service</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || allServices.length === 0}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting || allServices.length === 0}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={allServices.length > 0 ? "Select a service..." : "Loading services..."} />
@@ -265,11 +271,25 @@ export function WhopPhantomForm({
                     name="version"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Version</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., v1.0" {...field} disabled={isSubmitting} />
-                        </FormControl>
-                        <FormMessage />
+                            <FormLabel>Version (Shortcut)</FormLabel>
+                             <Select onValueChange={(value) => {
+                                field.onChange(value);
+                                form.setValue('serviceId', value);
+                             }} value={field.value} disabled={isSubmitting}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a shortcut..." />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {versionShortcuts.map((shortcut) => (
+                                        <SelectItem key={shortcut.value} value={shortcut.value}>
+                                            {shortcut.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
