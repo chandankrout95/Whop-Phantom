@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -45,7 +46,7 @@ export function LoginForm() {
     setError(null);
 
     if (isPermanentlyLocked) {
-      setError('System locked. Please refresh the page.');
+      setError('System locked. Contact dealer.');
       setIsLoading(false);
       return;
     }
@@ -63,7 +64,7 @@ export function LoginForm() {
         setMasterKeyAttempts(newMasterKeyAttempts);
         if (newMasterKeyAttempts >= 3) {
           setIsPermanentlyLocked(true);
-          setError('System permanently locked due to multiple invalid master key attempts. Please refresh.');
+          setError('System permanently locked due to multiple invalid master key attempts. Contact dealer.');
         } else {
           setError(`Invalid master key. ${3 - newMasterKeyAttempts} attempts remaining.`);
         }
