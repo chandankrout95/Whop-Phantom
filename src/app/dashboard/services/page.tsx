@@ -32,6 +32,7 @@ import type { Service } from '@/lib/types';
 import { mockServices, mockPanels } from '@/lib/mock-data';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ServicesPage() {
   const allServices = mockServices;
@@ -39,6 +40,7 @@ export default function ServicesPage() {
   const [chosenServices, setChosenServices] = useState<Service[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   const handleSelectService = (serviceId: string, isSelected: boolean) => {
     setSelectedServices(prev => {
@@ -59,6 +61,15 @@ export default function ServicesPage() {
     const servicesToActuallyAdd = servicesToAdd.filter(
       (serviceToAdd) => !chosenServices.some((cs) => cs.id === serviceToAdd.id)
     );
+    
+    if (chosenServices.length + servicesToActuallyAdd.length > 3) {
+        toast({
+            title: "Limit Reached",
+            description: "You can only have a maximum of 3 chosen services.",
+            variant: "destructive"
+        });
+        return;
+    }
 
     setChosenServices(prev => [...prev, ...servicesToActuallyAdd]);
     setSelectedServices(new Set());
@@ -84,7 +95,7 @@ export default function ServicesPage() {
             <DialogHeader>
               <DialogTitle>Add Services</DialogTitle>
               <DialogDescription>
-                Select services to add to your curated list.
+                Select services to add to your curated list. (Max 3)
               </DialogDescription>
             </DialogHeader>
             <ScrollArea className="h-96">
