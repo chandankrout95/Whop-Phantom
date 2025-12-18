@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -42,6 +42,25 @@ export default function ServicesPage() {
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
+  useEffect(() => {
+    try {
+      const savedServices = localStorage.getItem('chosenServices');
+      if (savedServices) {
+        setChosenServices(JSON.parse(savedServices));
+      }
+    } catch (error) {
+      console.error("Could not read chosen services from localStorage", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+        localStorage.setItem('chosenServices', JSON.stringify(chosenServices));
+    } catch (error) {
+        console.error("Could not save chosen services to localStorage", error);
+    }
+  }, [chosenServices]);
+
   const handleSelectService = (serviceId: string, isSelected: boolean) => {
     setSelectedServices(prev => {
       const newSelection = new Set(prev);
@@ -57,7 +76,6 @@ export default function ServicesPage() {
   const handleAddServices = () => {
     const servicesToAdd = allServices.filter(s => selectedServices.has(s.id));
     
-    // Prevent duplicates
     const servicesToActuallyAdd = servicesToAdd.filter(
       (serviceToAdd) => !chosenServices.some((cs) => cs.id === serviceToAdd.id)
     );
@@ -144,7 +162,7 @@ export default function ServicesPage() {
         <CardHeader>
           <CardTitle>Your Chosen Services</CardTitle>
           <CardDescription>
-            A curated list of your most-used services.
+            A curated list of your most-used services. (Max 3)
           </CardDescription>
         </CardHeader>
         <CardContent>

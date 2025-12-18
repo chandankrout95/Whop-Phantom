@@ -21,12 +21,11 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState, useMemo } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import type { Order } from '@/lib/types';
+import type { Order, Service } from '@/lib/types';
 import { getSmmServices } from '@/app/dashboard/actions';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../ui/select';
 import { ScrollArea } from '../ui/scroll-area';
 import { useNewOrder } from '@/context/new-order-context';
-import { CampaignHistory } from './campaign-history';
 
 
 const phantomFormSchema = z.object({
@@ -66,9 +65,9 @@ export function WhopPhantomForm({
   setCampaigns: React.Dispatch<React.SetStateAction<Order[]>>;
 }) {
   const { toast } = useToast();
-  const [view, setView] = useState<'form' | 'history'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [services, setServices] = useState<any[]>([]);
+  const [allServices, setAllServices] = useState<any[]>([]);
+  const [mainServices, setMainServices] = useState<Service[]>([]);
   const { platform } = useNewOrder();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -76,7 +75,7 @@ export function WhopPhantomForm({
     const fetchServices = async () => {
       try {
         const fetchedServices = await getSmmServices();
-        setServices(fetchedServices);
+        setAllServices(fetchedServices);
       } catch (error) {
         toast({
           title: "Error fetching services",
@@ -87,24 +86,40 @@ export function WhopPhantomForm({
     };
     fetchServices();
   }, [toast]);
+  
+  useEffect(() => {
+    try {
+        const savedServices = localStorage.getItem('chosenServices');
+        if (savedServices) {
+            setMainServices(JSON.parse(savedServices));
+        }
+    } catch (error) {
+        console.error("Could not read chosen services from localStorage", error);
+    }
+  }, []);
 
   const filteredServices = useMemo(() => {
-    let servicesByPlatform = services;
+    let servicesByPlatform = allServices;
     if (platform !== 'all' && platform) {
-      servicesByPlatform = services.filter(service => 
+      servicesByPlatform = allServices.filter(service => 
         (service.category?.toLowerCase() || '').includes(platform.toLowerCase())
       );
     }
     
+    // Exclude main services from the "all" list
+    const mainServiceIds = new Set(mainServices.map(s => s.id));
+    let allFiltered = servicesByPlatform.filter(s => !mainServiceIds.has(s.service.toString()));
+
+
     if (!searchTerm) {
-        return servicesByPlatform;
+        return allFiltered;
     }
 
-    return servicesByPlatform.filter(service => 
+    return allFiltered.filter(service => 
         service.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-  }, [services, platform, searchTerm]);
+  }, [allServices, mainServices, platform, searchTerm]);
 
 
   const form = useForm<PhantomFormValues>({
@@ -123,7 +138,7 @@ export function WhopPhantomForm({
 
   const onSubmit = async (data: PhantomFormValues) => {
     
-    const selectedService = services.find(s => s.service === data.serviceId);
+    const selectedService = allServices.find(s => s.service === data.serviceId);
 
     const newCampaign: Order = {
         id: `C-${Date.now()}`,
@@ -201,10 +216,10 @@ export function WhopPhantomForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Service</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || services.length === 0}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || allServices.length === 0}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={services.length > 0 ? "Select a service..." : "Loading services..."} />
+                            <SelectValue placeholder={allServices.length > 0 ? "Select a service..." : "Loading services..."} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -217,11 +232,25 @@ export function WhopPhantomForm({
                               />
                             </div>
                             <ScrollArea className="h-72">
-                            {filteredServices.map((service) => (
-                                <SelectItem key={service.service} value={service.service.toString()}>
-                                {service.name} (${service.rate}/1k)
-                                </SelectItem>
-                            ))}
+                              {mainServices.length > 0 && (
+                                <SelectGroup>
+                                  <SelectLabel>Main Services</SelectLabel>
+                                  {mainServices.map((service) => (
+                                    <SelectItem key={service.id} value={service.id.toString()}>
+                                      {service.name} (${service.rate}/1k)
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              )}
+                              {mainServices.length > 0 && <SelectSeparator />}
+                              <SelectGroup>
+                                <SelectLabel>All Services</SelectLabel>
+                                {filteredServices.map((service) => (
+                                    <SelectItem key={service.service} value={service.service.toString()}>
+                                    {service.name} (${service.rate}/1k)
+                                    </SelectItem>
+                                ))}
+                              </SelectGroup>
                             </ScrollArea>
                         </SelectContent>
                       </Select>
@@ -344,7 +373,7 @@ export function WhopPhantomForm({
                 />
 
 
-                <Button type="submit" className="w-full !mt-8 text-lg" size="lg" disabled={isSubmitting || services.length === 0}>
+                <Button type="submit" className="w-full !mt-8 text-lg" size="lg" disabled={isSubmitting || allServices.length === 0}>
                     {isSubmitting ? 'Submitting...' : 'Create Campaign'}
                 </Button>
             </form>
@@ -353,5 +382,3 @@ export function WhopPhantomForm({
     </div>
   );
 }
-
-    
