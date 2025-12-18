@@ -13,7 +13,7 @@ interface NewOrderContextType {
 const NewOrderContext = createContext<NewOrderContextType | undefined>(undefined);
 
 export function NewOrderProvider({ children }: { children: ReactNode }) {
-  const [platform, setPlatform] = useState<Platform>('all');
+  const [platform, setPlatform] = useState<Platform>('instagram');
 
   return (
     <NewOrderContext.Provider value={{ platform, setPlatform }}>

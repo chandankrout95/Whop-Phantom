@@ -37,7 +37,7 @@ export function NewOrderForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        platform: platform || 'all',
+        platform: platform || 'instagram',
     }
   });
 
