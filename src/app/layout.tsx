@@ -4,8 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth';
 
 export const metadata: Metadata = {
-  title: 'SMM Connector',
-  description: 'Connect and manage all your SMM panels in one place.',
+  title: 'Whop Phantom',
+  description: 'Whop best nemesis',
 };
 
 export default function RootLayout({
