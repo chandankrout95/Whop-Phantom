@@ -167,9 +167,15 @@ export function WhopPhantomForm({
           ...data,
           totalOrdered: 0,
           runs: 0,
-          nextRun: Date.now() + 5000 // Start first run after 5 seconds
+          nextRun: Date.now() + 5000, // Start first run after 5 seconds
         }
     };
+
+    // Ensure the serviceId in dripFeed is the correct one from the form, not the version shortcut
+    if (newCampaign.dripFeed) {
+      newCampaign.dripFeed.serviceId = data.serviceId;
+    }
+
 
     setCampaigns(prev => [newCampaign, ...prev]);
 
@@ -441,4 +447,6 @@ export function WhopPhantomForm({
 }
 
     
+    
+
     
