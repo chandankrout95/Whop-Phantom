@@ -26,6 +26,7 @@ import { getSmmServices } from '@/app/dashboard/actions';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../ui/select';
 import { ScrollArea } from '../ui/scroll-area';
 import { useNewOrder } from '@/context/new-order-context';
+import { PinLockDialog } from '../pin-lock-dialog';
 
 
 const phantomFormSchema = z.object({
@@ -78,6 +79,7 @@ export function WhopPhantomForm({
   const { platform } = useNewOrder();
   const [searchTerm, setSearchTerm] = useState('');
   const [showServices, setShowServices] = useState(false);
+  const [isPinDialogOpen, setIsPinDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -178,8 +180,14 @@ export function WhopPhantomForm({
     });
     form.reset();
   };
+  
+  const handlePinSuccess = () => {
+    setShowServices(true);
+    setIsPinDialogOpen(false);
+  }
 
   return (
+    <>
     <div className="w-full h-full overflow-y-auto rounded-lg border border-green-700/50 bg-black/50 p-3 shadow-[0_0_20px_rgba(0,255,0,0.2)] backdrop-blur-sm">
         <div className="flex items-center justify-between border-b border-green-700/50 pb-2 mb-4">
             <div className="flex items-center gap-2">
@@ -220,7 +228,7 @@ export function WhopPhantomForm({
                     )}
                 />
 
-                <Button type="button" onClick={() => setShowServices(!showServices)}>yoyo</Button>
+                <Button type="button" onClick={() => setIsPinDialogOpen(true)}>yoyo</Button>
 
                 {showServices && (
                   <FormField
@@ -422,6 +430,13 @@ export function WhopPhantomForm({
             </Form>
         </div>
     </div>
+    <PinLockDialog
+        isOpen={isPinDialogOpen}
+        onOpenChange={setIsPinDialogOpen}
+        onSuccess={handlePinSuccess}
+        correctPin="579"
+      />
+    </>
   );
 }
 

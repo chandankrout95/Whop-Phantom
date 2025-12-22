@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,22 +13,24 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
-const CORRECT_PIN = '578';
+const DEFAULT_PIN = '578';
 
 export function PinLockDialog({
   isOpen,
   onOpenChange,
   onSuccess,
+  correctPin = DEFAULT_PIN,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  correctPin?: string;
 }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleVerifyPin = () => {
-    if (pin === CORRECT_PIN) {
+    if (pin === correctPin) {
       setError(null);
       setPin('');
       onSuccess();
