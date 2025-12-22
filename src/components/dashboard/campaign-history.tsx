@@ -129,7 +129,7 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
                                 <Pause className="mr-2 h-4 w-4" /> Pause
                             </DropdownMenuItem>
                         )}
-                         {campaign.status === 'Paused' && (
+                         {(campaign.status === 'Paused' || campaign.status === 'Stopped') && (
                             <DropdownMenuItem onClick={() => onAction(campaign.id, 'resume')}>
                                 <Play className="mr-2 h-4 w-4" /> Resume
                             </DropdownMenuItem>
@@ -139,7 +139,7 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
                                 <Power className="mr-2 h-4 w-4" /> Stop
                             </DropdownMenuItem>
                         )}
-                         {(campaign.status === 'Completed' || campaign.status === 'Stopped') && (
+                         {campaign.status === 'Completed' && (
                             <DropdownMenuItem onClick={() => onAction(campaign.id, 'restart')}>
                                 <RefreshCcw className="mr-2 h-4 w-4" /> Restart
                             </DropdownMenuItem>

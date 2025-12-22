@@ -63,6 +63,8 @@ export default function WhopPhantomPage() {
             return { ...c, status: 'Stopped' };
           case 'restart':
              if (!c.dripFeed) return c;
+             // For restart, reset progress and set to 'In Progress'
+             // If it was stopped, this will behave like resuming but with reset stats.
              return {
                 ...c,
                 status: 'In Progress',
