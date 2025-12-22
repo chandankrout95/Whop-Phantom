@@ -77,6 +77,7 @@ export function WhopPhantomForm({
   const [mainServices, setMainServices] = useState<Service[]>([]);
   const { platform } = useNewOrder();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showServices, setShowServices] = useState(false);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -218,54 +219,60 @@ export function WhopPhantomForm({
                         </FormItem>
                     )}
                 />
-                 <FormField
-                  control={form.control}
-                  name="serviceId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Service</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting || allServices.length === 0}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={allServices.length > 0 ? "Select a service..." : "Loading services..."} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <div className="p-2">
-                              <Input 
-                                placeholder="Search services..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full"
-                              />
-                            </div>
-                            <ScrollArea className="h-72">
-                              {mainServices.length > 0 && (
+
+                <Button type="button" onClick={() => setShowServices(!showServices)}>yoyo</Button>
+
+                {showServices && (
+                  <FormField
+                    control={form.control}
+                    name="serviceId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Service</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting || allServices.length === 0}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={allServices.length > 0 ? "Select a service..." : "Loading services..."} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                              <div className="p-2">
+                                <Input 
+                                  placeholder="Search services..."
+                                  value={searchTerm}
+                                  onChange={(e) => setSearchTerm(e.target.value)}
+                                  className="w-full"
+                                />
+                              </div>
+                              <ScrollArea className="h-72">
+                                {mainServices.length > 0 && (
+                                  <SelectGroup>
+                                    <SelectLabel>Main Services</SelectLabel>
+                                    {mainServices.map((service) => (
+                                      <SelectItem key={service.id} value={service.id.toString()}>
+                                        {service.name} (${service.rate}/1k)
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                )}
+                                {mainServices.length > 0 && <SelectSeparator />}
                                 <SelectGroup>
-                                  <SelectLabel>Main Services</SelectLabel>
-                                  {mainServices.map((service) => (
-                                    <SelectItem key={service.id} value={service.id.toString()}>
+                                  <SelectLabel>All Services</SelectLabel>
+                                  {filteredServices.map((service) => (
+                                      <SelectItem key={service.service} value={service.service.toString()}>
                                       {service.name} (${service.rate}/1k)
-                                    </SelectItem>
+                                      </SelectItem>
                                   ))}
                                 </SelectGroup>
-                              )}
-                              {mainServices.length > 0 && <SelectSeparator />}
-                              <SelectGroup>
-                                <SelectLabel>All Services</SelectLabel>
-                                {filteredServices.map((service) => (
-                                    <SelectItem key={service.service} value={service.service.toString()}>
-                                    {service.name} (${service.rate}/1k)
-                                    </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </ScrollArea>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                              </ScrollArea>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
                 <FormField
                     control={form.control}
                     name="version"
@@ -418,4 +425,5 @@ export function WhopPhantomForm({
   );
 }
 
+    
     
