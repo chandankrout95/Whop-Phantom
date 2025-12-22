@@ -20,14 +20,26 @@ import { Button } from "@/components/ui/button";
 import type { Order, Service, Panel } from "@/lib/types";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
-import { mockOrders, mockServices, mockPanels } from '@/lib/mock-data';
+import { mockServices, mockPanels } from '@/lib/mock-data';
 import { Timestamp } from "firebase/firestore";
+import { useEffect, useState } from "react";
 
 
 export default function OrdersPage() {
-  const orders: Order[] = mockOrders;
+  const [orders, setOrders] = useState<Order[]>([]);
   const services: Service[] = mockServices;
   const panels: Panel[] = mockPanels;
+
+  useEffect(() => {
+    try {
+      const savedCampaigns = localStorage.getItem('phantomCampaigns');
+      if (savedCampaigns) {
+        setOrders(JSON.parse(savedCampaigns));
+      }
+    } catch (error) {
+        console.error("Could not read campaigns from localStorage", error);
+    }
+  }, []);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -36,8 +48,10 @@ export default function OrdersPage() {
       case "In Progress":
         return "secondary";
       case "Pending":
+      case "Paused":
         return "outline";
       case "Canceled":
+      case "Stopped":
         return "destructive";
       default:
         return "outline";
@@ -46,7 +60,6 @@ export default function OrdersPage() {
 
   const formatDate = (dateValue: any) => {
     if (!dateValue) return '';
-    // This is a simplified date formatter since we're using string dates now
     if (typeof dateValue === 'string') {
         return new Date(dateValue).toLocaleDateString();
     }
@@ -71,29 +84,29 @@ export default function OrdersPage() {
       <Card>
         <CardHeader>
           <CardTitle>Order History</CardTitle>
-          <CardDescription>A complete list of all your orders.</CardDescription>
+          <CardDescription>A complete list of all your orders and campaigns.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Service</TableHead>
+                <TableHead>Service / Campaign</TableHead>
                 <TableHead className="hidden sm:table-cell">Panel</TableHead>
                 <TableHead className="hidden md:table-cell">Date</TableHead>
-                <TableHead className="text-right">Charge</TableHead>
+                <TableHead className="text-right">Charge / Total</TableHead>
                 <TableHead className="text-right">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orders?.map((order) => {
-                const service = services?.find((s) => s.id === order.serviceId);
+                const service = services?.find((s) => s.id === order.serviceId) || mockServices.find(s => s.id === order.serviceId);
                 const panel = panels?.find((p) => p.id === order.panelId);
                 return (
                   <TableRow key={order.id}>
                     <TableCell>
-                      <div className="font-medium">{service?.name}</div>
+                      <div className="font-medium">{order.dripFeed?.campaignName || service?.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        Qty: {order.quantity.toLocaleString()}
+                        {order.dripFeed ? `Total Qty: ${order.quantity.toLocaleString()}` : `Qty: ${order.quantity.toLocaleString()}`}
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">

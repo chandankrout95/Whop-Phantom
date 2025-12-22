@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { Panel, Order } from "@/lib/types";
 import { DollarSign, ListOrdered, Server } from "lucide-react";
 import {
@@ -8,11 +8,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { mockPanels, mockOrders } from '@/lib/mock-data';
+import { mockPanels } from '@/lib/mock-data';
 
 export function OverviewCards() {
   const panels: Panel[] = mockPanels;
-  const orders: Order[] = mockOrders;
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    try {
+      const savedOrders = localStorage.getItem('phantomCampaigns');
+      if (savedOrders) {
+        setOrders(JSON.parse(savedOrders));
+      }
+    } catch (error) {
+      console.error('Could not read orders from localStorage', error);
+    }
+  }, []);
 
   const totalBalance = useMemo(() => panels?.reduce((sum, panel) => sum + panel.balance, 0), [panels]);
   const totalOrders = orders?.length ?? 0;

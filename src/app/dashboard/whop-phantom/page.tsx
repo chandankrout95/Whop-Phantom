@@ -10,6 +10,7 @@ import type { Order } from '@/lib/types';
 import { placeSmmOrder } from '@/app/dashboard/actions';
 import { useToast } from '@/hooks/use-toast';
 import { EditCampaignForm } from '@/components/dashboard/edit-campaign-form';
+import { mockOrders } from '@/lib/mock-data';
 
 export default function WhopPhantomPage() {
   const [campaigns, setCampaigns] = useState<Order[]>([]);
@@ -22,9 +23,13 @@ export default function WhopPhantomPage() {
       const savedCampaigns = localStorage.getItem('phantomCampaigns');
       if (savedCampaigns) {
         setCampaigns(JSON.parse(savedCampaigns));
+      } else {
+        // If no campaigns are saved, initialize with mock data
+        setCampaigns(mockOrders);
       }
     } catch (error) {
         console.error("Could not read campaigns from localStorage", error);
+        setCampaigns(mockOrders); // Fallback to mock data on error
     }
   }, []);
 

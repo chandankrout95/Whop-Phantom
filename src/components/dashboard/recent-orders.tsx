@@ -17,13 +17,28 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { Order, Service, Panel } from "@/lib/types";
-import { mockOrders, mockServices, mockPanels } from '@/lib/mock-data';
+import { mockServices, mockPanels } from '@/lib/mock-data';
+import { useEffect, useState } from "react";
 
 
 export function RecentOrders() {
-  const recentOrders: Order[] = mockOrders.slice(0, 5);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const services: Service[] = mockServices;
   const panels: Panel[] = mockPanels;
+
+  useEffect(() => {
+    try {
+      const savedOrders = localStorage.getItem('phantomCampaigns');
+      if (savedOrders) {
+        const allOrders = JSON.parse(savedOrders);
+        // Sort by date and take the most recent 5
+        const sortedOrders = allOrders.sort((a: Order, b: Order) => new Date(b.createdAt.toString()).getTime() - new Date(a.createdAt.toString()).getTime());
+        setRecentOrders(sortedOrders.slice(0, 5));
+      }
+    } catch (error) {
+      console.error('Could not read orders from localStorage', error);
+    }
+  }, []);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -32,8 +47,10 @@ export function RecentOrders() {
       case "In Progress":
         return "secondary";
       case "Pending":
+      case "Paused":
         return "outline";
       case "Canceled":
+      case "Stopped":
         return "destructive";
       default:
         return "outline";
@@ -63,7 +80,7 @@ export function RecentOrders() {
                 return (
                   <TableRow key={order.id}>
                     <TableCell>
-                      <div className="font-medium">{service?.name}</div>
+                      <div className="font-medium">{order.dripFeed?.campaignName || service?.name}</div>
                       <div className="hidden text-sm text-muted-foreground md:inline">
                         Qty: {order.quantity.toLocaleString()}
                       </div>
