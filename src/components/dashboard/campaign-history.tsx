@@ -1,6 +1,9 @@
-
 'use client';
 
+import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState } from "@/lib/store"; // adjust the path to your store
+import type { Order } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -17,14 +20,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { Order } from "@/lib/types";
-import { useEffect, useState } from "react";
 import { Progress } from "../ui/progress";
 import { MoreVertical, Pause, Play, Power, RefreshCcw, Shield, ShieldAlert, ShieldCheck, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
+// --------- Reuse your helper components ---------
 const AntiCheatIcon = ({ status }: { status: string }) => {
     switch (status) {
         case 'SAFE':
@@ -51,13 +53,12 @@ const getStatusVariant = (status: Order['status']) => {
 
 const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart' | 'edit') => void; }) => {
     const [countdown, setCountdown] = useState(0);
-
     const isDripFeed = !!campaign.dripFeed;
-    const totalQuantity = isDripFeed ? campaign.quantity : campaign.quantity;
+    const totalQuantity = campaign.quantity;
     const currentDelivered = isDripFeed ? campaign.dripFeed!.totalOrdered : 0;
     const completionPercentage = (currentDelivered / totalQuantity) * 100;
     
-     useEffect(() => {
+    useEffect(() => {
         if (campaign.status !== 'In Progress') {
             setCountdown(0);
             return;
@@ -78,7 +79,6 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
         const countdownInterval = setInterval(calculateCountdown, 1000);
         return () => clearInterval(countdownInterval);
     }, [campaign, isDripFeed]);
-
 
     return (
         <TableRow>
@@ -129,7 +129,7 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
                                 <Pause className="mr-2 h-4 w-4" /> Pause
                             </DropdownMenuItem>
                         )}
-                         {(campaign.status === 'Paused' || campaign.status === 'Stopped') && (
+                        {(campaign.status === 'Paused' || campaign.status === 'Stopped') && (
                             <DropdownMenuItem onClick={() => onAction(campaign.id, 'resume')}>
                                 <Play className="mr-2 h-4 w-4" /> Resume
                             </DropdownMenuItem>
@@ -139,7 +139,7 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
                                 <Power className="mr-2 h-4 w-4" /> Stop
                             </DropdownMenuItem>
                         )}
-                         {campaign.status === 'Completed' && (
+                        {campaign.status === 'Completed' && (
                             <DropdownMenuItem onClick={() => onAction(campaign.id, 'restart')}>
                                 <RefreshCcw className="mr-2 h-4 w-4" /> Restart
                             </DropdownMenuItem>
@@ -151,43 +151,44 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
     );
 }
 
+// --------- Redux-connected CampaignHistory ---------
+export function CampaignHistory({ onCampaignAction }: { onCampaignAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart' | 'edit') => void; }) {
+    const campaigns = useSelector((state: RootState) => state.campaigns.campaigns); // ✅ Redux selector
 
-export function CampaignHistory({ campaigns, onCampaignAction }: { campaigns: Order[], onCampaignAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart' | 'edit') => void; }) {
-
-  return (
-    <Card className="bg-background/80 backdrop-blur-sm border-border/50 h-full flex flex-col">
-      <CardHeader>
-        <CardTitle className="text-foreground">Live Campaign History</CardTitle>
-        <CardDescription>A live log of your botting campaigns from this session.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-grow overflow-y-auto">
-        {campaigns.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Campaign</TableHead>
-                <TableHead className="text-center">Total Views</TableHead>
-                <TableHead className="text-center">Views Delivered</TableHead>
-                <TableHead className="text-center">Next Order</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center">Anti-Cheat</TableHead>
-                <TableHead className="text-center">Flagged</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {campaigns?.map((campaign) => (
-                  <CampaignRow key={campaign.id} campaign={campaign} onAction={onCampaignAction} />
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-            <div className="flex flex-col items-center justify-center h-48 gap-2 text-center">
-                <p className="text-lg font-semibold text-foreground">No Campaigns Yet</p>
-                <p className="text-sm text-muted-foreground">Start a new botting task to see its history here.</p>
-            </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+    return (
+        <Card className="bg-background/80 backdrop-blur-sm border-border/50 h-full flex flex-col">
+          <CardHeader>
+            <CardTitle className="text-foreground">Live Campaign History</CardTitle>
+            <CardDescription>A live log of your botting campaigns from this session.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-grow overflow-y-auto">
+            {campaigns.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Campaign</TableHead>
+                    <TableHead className="text-center">Total Views</TableHead>
+                    <TableHead className="text-center">Views Delivered</TableHead>
+                    <TableHead className="text-center">Next Order</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="text-center">Anti-Cheat</TableHead>
+                    <TableHead className="text-center">Flagged</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {campaigns.map((campaign) => (
+                      <CampaignRow key={campaign.id} campaign={campaign} onAction={onCampaignAction} />
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+                <div className="flex flex-col items-center justify-center h-48 gap-2 text-center">
+                    <p className="text-lg font-semibold text-foreground">No Campaigns Yet</p>
+                    <p className="text-sm text-muted-foreground">Start a new botting task to see its history here.</p>
+                </div>
+            )}
+          </CardContent>
+        </Card>
+    );
 }

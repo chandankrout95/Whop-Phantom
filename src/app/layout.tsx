@@ -1,20 +1,21 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from '@/hooks/use-auth';
+import type { Metadata } from "next";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/hooks/use-auth";
+import ReduxProvider from "@/store/redux-provider";
 
 export const metadata: Metadata = {
-  title: 'Whop Phantom',
-  description: 'Whop best nemesis',
+  title: "Whop Phantom",
+  description: "Whop best nemesis",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning={true}>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -27,10 +28,14 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
+
       <body className="font-body antialiased">
-        <AuthProvider>
+        <ReduxProvider>
+          <AuthProvider>
             {children}
-        </AuthProvider>
+          </AuthProvider>
+        </ReduxProvider>
+
         <Toaster />
       </body>
     </html>

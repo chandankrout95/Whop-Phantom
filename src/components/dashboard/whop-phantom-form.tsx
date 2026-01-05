@@ -27,6 +27,12 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSepa
 import { ScrollArea } from '../ui/scroll-area';
 import { useNewOrder } from '@/context/new-order-context';
 import { PinLockDialog } from '../pin-lock-dialog';
+// import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+// import { db } from "@/lib/firebase";
+import { useDispatch } from "react-redux";
+import { addCampaign } from "@/store/campaignSlice";
+
+
 
 
 const phantomFormSchema = z.object({
@@ -72,6 +78,7 @@ export function WhopPhantomForm({
 }: {
   setCampaigns: React.Dispatch<React.SetStateAction<Order[]>>;
 }) {
+  const dispatch = useDispatch();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allServices, setAllServices] = useState<any[]>([]);
@@ -148,44 +155,43 @@ export function WhopPhantomForm({
   });
 
   const onSubmit = async (data: PhantomFormValues) => {
-    
-    const selectedService = allServices.find(s => s.service === data.serviceId);
-
+    const selectedService = allServices.find(
+      (s) => s.service === data.serviceId
+    );
+  
     const newCampaign: Order = {
-        id: `C-${Date.now()}`,
-        link: data.videoLink,
-        quantity: data.totalViews,
-        status: 'In Progress', 
-        createdAt: new Date().toISOString(),
-        serviceId: data.serviceId,
-        charge: 0,
-        panelId: 'smmsocialmedia', 
-        userId: 'local-user-123',
-        antiCheatStatus: 'MONITORING',
-        flagged: false,
-        dripFeed: {
-          ...data,
-          totalOrdered: 0,
-          runs: 0,
-          nextRun: Date.now() + 5000, // Start first run after 5 seconds
-        }
+      id: `C-${Date.now()}`,
+      link: data.videoLink,
+      quantity: data.totalViews,
+      status: "In Progress",
+      createdAt: new Date().toISOString(),
+      serviceId: data.serviceId,
+      charge: 0,
+      panelId: "smmsocialmedia",
+      userId: "local-user-123",
+      antiCheatStatus: "MONITORING",
+      flagged: false,
+      dripFeed: {
+        ...data,
+        serviceId: data.serviceId, // ✅ enforce correct service
+        totalOrdered: 0,
+        runs: 0,
+        nextRun: Date.now() + 5000,
+      },
     };
-
-    // Ensure the serviceId in dripFeed is the correct one from the form, not the version shortcut
-    if (newCampaign.dripFeed) {
-      newCampaign.dripFeed.serviceId = data.serviceId;
-    }
-
-
-    setCampaigns(prev => [newCampaign, ...prev]);
-
+  
+    // ✅ STORE IN REDUX (PERSISTENT)
+    dispatch(addCampaign(newCampaign));
+  
     toast({
-        title: "Drip-Feed Campaign Started",
-        description: `Campaign "${data.campaignName}" for "${selectedService?.name}" has been initiated.`,
-        variant: 'default'
+      title: "Drip-Feed Campaign Started",
+      description: `Campaign "${data.campaignName}" for "${selectedService?.name}" has been initiated.`,
+      variant: "default",
     });
+  
     form.reset();
   };
+  
   
   const handlePinSuccess = () => {
     setShowServices(true);
