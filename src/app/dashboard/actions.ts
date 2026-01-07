@@ -24,6 +24,7 @@ export async function placeSmmOrder(input: z.infer<typeof smmOrderSchema>) {
     link: input.link.trim(),
     quantity: input.quantity.toString(),
   });
+  // console.log("params" , params);
 
   try {
     const response = await fetch(apiUrl, {
