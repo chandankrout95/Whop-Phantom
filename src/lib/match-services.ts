@@ -1,36 +1,40 @@
 import { SERVICE_ALIASES } from "./service-aliases";
 
-export function matchPanelServices(allServices: any[]) {
-  return SERVICE_ALIASES.map(alias => {
-    let bestMatch = null;
-    let bestScore = 0;
+/**
+ * Returns only the 6 specific services from all backend services
+ */
+export function matchPanelServices(panelServices: any[]) {
+  const matched: {
+    key: string;
+    label: string;
+    serviceId: string;
+    rate: number | string;
+    min: number;
+    max: number;
+    rawName: string;
+  }[] = [];
 
-    for (const service of allServices) {
-      const name = service.name?.toLowerCase() || "";
-      let score = 0;
+  const usedServiceIds = new Set<string>();
 
-      for (const keyword of alias.match) {
-        if (name.includes(keyword)) {
-          score++;
-        }
-      }
+  for (const alias of SERVICE_ALIASES) {
+    const service = panelServices.find((s) => {
+      const id = s.service.toString();
+      return alias.include.includes(id) && !usedServiceIds.has(id);
+    });
 
-      // require at least 2 keyword matches (tunable)
-      if (score >= 2 && score > bestScore) {
-        bestScore = score;
-        bestMatch = service;
-      }
+    if (service) {
+      matched.push({
+        key: alias.key,
+        label: alias.uiName,
+        serviceId: service.service.toString(),
+        rate: service.rate,
+        min: service.min,
+        max: service.max,
+        rawName: service.name,
+      });
+      usedServiceIds.add(service.service.toString());
     }
+  }
 
-    if (!bestMatch) return null;
-
-    return {
-      key: alias.key,
-      label: alias.uiName,
-      serviceId: String(bestMatch.service),
-      rate: bestMatch.rate,
-      rawName: bestMatch.name,
-      score: bestScore, // debug
-    };
-  }).filter(Boolean);
+  return matched;
 }

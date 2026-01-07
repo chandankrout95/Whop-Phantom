@@ -30,7 +30,7 @@ import { PinLockDialog } from '../pin-lock-dialog';
 // import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 // import { db } from "@/lib/firebase";
 import { useDispatch } from "react-redux";
-import { addCampaign } from "@/store/campaignSlice";
+import { addCampaign, updateCampaignProgress } from "@/store/campaignSlice";
 import { matchPanelServices } from '@/lib/match-services';
 
 
@@ -108,8 +108,9 @@ export function WhopPhantomForm({
   useEffect(() => {
     async function load() {
       const all = await getSmmServices();
+      console.log(all)
       const mapped = matchPanelServices(all);
-      // console.log(mapped);
+      console.log(mapped);
       setMappedServices(mapped);
     }
     load();
@@ -119,12 +120,19 @@ export function WhopPhantomForm({
       new Map(mappedServices.map(s => [s.serviceId, s])).values()
     );
   }, [mappedServices]);
-  
-  
-  
-  
-  
-  
+
+
+  function getRandomBetween(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+
+
+
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -193,90 +201,130 @@ export function WhopPhantomForm({
     },
   });
 
-  const onSubmit = async (data: z.infer<typeof phantomFormSchema>) => {
+  const onSubmit = async (data: PhantomFormValues) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
-    // console.log(data.serviceId)
-    // console.log(allServices)
-   
-
-
+  
+    const campaignId = `C-${Date.now()}`;
+  
     try {
       if (!selectedService) {
         throw new Error("No service selected");
       }
-      
-      if (data.quantityFrom < selectedService.min) {
-        throw new Error(
-          `Minimum quantity for this service is ${selectedService.min}`
-        );
-      }
-      
-      if (data.quantityFrom > selectedService.max) {
-        throw new Error(
-          `Maximum quantity for this service is ${selectedService.max}`
-        );
-      }
-      
-      const normalizedTarget = String(data.serviceId).trim();
-
-      const exists = allServices.some(s => {
-        const serviceId =
-          s.service ??
-          s.id ??
-          s.service_id;
   
-        if (!serviceId) return false;
+      const min = data.quantityFrom;
+      const max = data.quantityTo;
   
-        return String(serviceId).trim() === normalizedTarget;
+      if (data.totalViews < min) {
+        throw new Error(`Minimum quantity is ${min}`);
+      }
+  
+      const intervalMs = Math.max(0, Number(data.timeInterval) * 60_000);
+  
+      let totalSent = 0;
+      let remaining = data.totalViews;
+  
+      // 1️⃣ Add campaign ONCE
+      dispatch(
+        addCampaign({
+          id: campaignId,
+          link: data.videoLink,
+          serviceId: data.serviceId,
+          quantity: data.totalViews,
+          sent: 0,
+          progress: 0,
+          status: "In Progress",
+          createdAt: new Date().toISOString(),
+          charge: 0,
+          panelId: "smmsocialmedia",
+          userId: "user-1",
+          dripFeed: {
+            campaignName: data.campaignName,
+            totalOrdered: data.totalViews,
+            quantityFrom: min,
+            quantityTo: max,
+            timeInterval: data.timeInterval,
+            runs: Math.ceil(data.totalViews / min),
+            nextRun: null,
+          },
+        })
+      );
+  
+      // 2️⃣ Drip-feed loop
+      while (remaining > 0) {
+        /**
+         * Quantity logic (IMPORTANT)
+         * - Must be >= min
+         * - Must be <= max
+         * - Must not break remaining total
+         */
+        let qty: number;
+        qty = getRandomBetween(min, max);
+        console.log("qty" , qty , "min" , min , "max" , max);
+        if (qty > remaining)
+        if (remaining <= qty) {
+          // last order → send exactly remaining
+          qty = remaining;
+        } 
+  
+        await placeSmmOrder({
+          link: data.videoLink,
+          quantity: qty,
+          serviceId: selectedService.serviceId,
+        });
+  
+        // 🔓 Allow user interaction AFTER first order is sent
+        if (totalSent === 0) {
+          setIsSubmitting(false);
+        }
+  
+        totalSent += qty;
+        remaining -= qty;
+  
+        const progress = Math.min(
+          100,
+          Math.round((totalSent / data.totalViews) * 100)
+        );
+  
+        // 3️⃣ Update ONLY Redux for progress
+        dispatch(
+          updateCampaignProgress({
+            id: campaignId,
+            sent: totalSent,
+            progress,
+            status: remaining === 0 ? "Completed" : "In Progress",
+          })
+        );
+  
+        if (remaining > 0 && intervalMs > 0) {
+          await sleep(intervalMs);
+        }
+      }
+  
+      toast({
+        title: "Campaign Completed",
+        description: `Total ${totalSent} sent successfully`,
       });
   
-      if (!exists) {
-        throw new Error(
-          `Service ID ${normalizedTarget} not found for this API key`
-        );
-      }
-      // 1. Send first order to SMM Panel immediately
-      const result = await placeSmmOrder({
-        link: data.videoLink,
-        quantity: data.quantityFrom,
-        serviceId: data.serviceId,
-      });
-
-      if (!result.success) throw new Error(result.error);
-
-      // 2. Create the Campaign object for the dashboard
-      const newCampaign: Order = {
-        id: `C-${Date.now()}`,
-        link: data.videoLink,
-        serviceId: data.serviceId, // Keep as string
-        quantity: data.totalViews,
-        status: "In Progress",
-        createdAt: new Date().toISOString(),
-        charge: 0,
-        panelId: "smmsocialmedia",
-        userId: "user-1",
-        dripFeed: {
-          campaignName: data.campaignName,
-          totalOrdered: data.quantityFrom,
-          quantityFrom: data.quantityFrom,
-          quantityTo: data.quantityTo,
-          timeInterval: data.timeInterval, // Store for the interval processor
-          nextRun: Date.now() + (parseInt(data.timeInterval) * 60000),
-          runs: 1,
-        },
-      };
-
-      dispatch(addCampaign(newCampaign));
-
-      setCampaigns((prev: any) => [newCampaign, ...prev]);
-      toast({ title: "Campaign Started", description: `Order #${result.orderId} placed.` });
       form.reset();
     } catch (err: any) {
-      toast({ title: "Order Failed", description: err.message, variant: "destructive" });
-    } finally {
+      dispatch(
+        updateCampaignProgress({
+          id: campaignId,
+          status: "Failed",
+        })
+      );
+  
+      toast({
+        title: "Order Failed",
+        description: err?.message || "Something went wrong",
+        variant: "destructive",
+      });
+  
       setIsSubmitting(false);
     }
   };
+  
 
 
 
@@ -405,60 +453,61 @@ export function WhopPhantomForm({
                   )}
                 />
               )}
-<FormField
-  control={form.control}
-  name="serviceId"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Service</FormLabel>
+              <FormField
+                control={form.control}
+                name="serviceId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Service</FormLabel>
 
-      <Select
-  value={field.value}
-  onValueChange={(value) => {
-    const service = allServices.find(
-      s => String(s.service) === String(value)
-    );
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        const service = allServices.find(
+                          s => String(s.service) === String(value)
+                        );
 
-    if (!service) {
-      toast({
-        title: "Invalid service",
-        description: "Service not available for this API key",
-        variant: "destructive",
-      });
-      return;
-    }
+                        if (!service) {
+                          toast({
+                            title: "Invalid service",
+                            description: "Service not available for this API key",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
 
-    setSelectedService(service);
+                        setSelectedService(service);
+                        console.log(service.min , service.max)
 
-    // auto-fix quantity
-    form.setValue("quantityFrom", service.min);
-    form.setValue("quantityTo", service.min);
+                        // auto-fix quantity
+                        form.setValue("quantityFrom", service.min);
+                        form.setValue("quantityTo", service.min);
 
-    field.onChange(value);
-  }}
->
-        <FormControl>
-          <SelectTrigger>
-            <SelectValue placeholder="Select service" />
-          </SelectTrigger>
-        </FormControl>
+                        field.onChange(value);
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select service" />
+                        </SelectTrigger>
+                      </FormControl>
 
-        <SelectContent>
-          {uniqueServices.map((service) => (
-            <SelectItem
-              key={service.serviceId}   // ✅ UNIQUE & STABLE
-              value={service.serviceId}
-            >
-              {service.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+                      <SelectContent>
+                        {uniqueServices.map((service) => (
+                          <SelectItem
+                            key={service.serviceId}   // ✅ UNIQUE & STABLE
+                            value={service.serviceId}
+                          >
+                            {service.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
 
               <FormField

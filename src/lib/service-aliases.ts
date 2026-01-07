@@ -2,32 +2,32 @@ export const SERVICE_ALIASES = [
     {
       key: "REELS_VIEWS_REACH",
       uiName: "Instagram Reels Views + Reach",
-      match: ["instagram", "reels", "views", "reach"],
+      include: ["3143"], // we can use service id directly
     },
     {
       key: "REELS_AD_VIEWS_GLOBAL",
       uiName: "Instagram Reels Ad Views (Global)",
-      match: ["instagram", "reels", "ad", "views"],
+      include: ["5116"],
     },
     {
       key: "REELS_VIEWS_INDIA_GLOBAL",
       uiName: "Instagram Reels Views (India + Global)",
-      match: ["instagram", "reels", "india"],
+      include: ["5232"],
     },
     {
       key: "LIKES_USA_MIX_REFILL",
       uiName: "Instagram Likes (USA Mix - Refill)",
-      match: ["instagram", "likes", "usa", "refill"],
+      include: ["3601"],
     },
     {
       key: "LIKES_USA_HQ",
       uiName: "Instagram Likes (USA - High Quality)",
-      match: ["instagram", "likes", "usa", "high"],
+      include: ["3602"],
     },
     {
       key: "LIKES_USA_MIX",
       uiName: "Instagram Likes (USA Mix)",
-      match: ["instagram", "likes", "usa", "mix"],
+      include: ["3603"],
     },
   ] as const;
   

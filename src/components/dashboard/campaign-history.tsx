@@ -52,11 +52,12 @@ const getStatusVariant = (status: Order['status']) => {
 }
 
 const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart' | 'edit') => void; }) => {
+    // console.log(campaign)
     const [countdown, setCountdown] = useState(0);
     const isDripFeed = !!campaign.dripFeed;
     const totalQuantity = campaign.quantity;
     const currentDelivered = isDripFeed ? campaign.dripFeed!.totalOrdered : 0;
-    const completionPercentage = (currentDelivered / totalQuantity) * 100;
+    const completionPercentage = campaign.progress || 0;
     
     useEffect(() => {
         if (campaign.status !== 'In Progress') {
