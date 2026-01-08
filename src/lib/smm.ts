@@ -3,7 +3,7 @@ import { z } from "zod";
 const smmOrderSchema = z.object({
   link: z.string().url(),
   quantity: z.number().min(1),
-  serviceId: z.string(),
+  serviceId: z.string().min(1),
 });
 
 export async function placeSmmOrder(input: z.infer<typeof smmOrderSchema>) {
@@ -15,7 +15,7 @@ export async function placeSmmOrder(input: z.infer<typeof smmOrderSchema>) {
   const params = new URLSearchParams({
     key: '0bc126b7730e879dd8c35a0e8c084f4c',
     action: "add",
-    service: input.serviceId,
+  service: input.serviceId,
     link: input.link,
     quantity: input.quantity.toString(),
   });
@@ -28,7 +28,7 @@ export async function placeSmmOrder(input: z.infer<typeof smmOrderSchema>) {
     });
 
     const data = await res.json();
-    if (!data.order) return { success: false, error: data.error };
+    if (!data.order) return { message: "Invalid response from SMM panel", success: false, error: data.error };
 
     return { success: true, orderId: data.order };
   } catch {

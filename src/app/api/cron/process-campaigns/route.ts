@@ -3,58 +3,106 @@ import { Campaign } from "@/models/Campaign";
 import { placeSmmOrder } from "@/lib/smm";
 
 export async function GET() {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const campaigns = await Campaign.find({ status: "processing" });
+    const campaigns = await Campaign.find({ status: "processing" });
+    const now = new Date();
 
-  const now = new Date();
-  console.log("CRON STARTED");
-  for (const c of campaigns) {
-    console.log("Processing campaign:", c._id.toString());
 
-    const remaining = c.totalQuantity - c.sentQuantity;
-    console.log("Remaining:", remaining);
+    console.log("🕒 CRON STARTED:", now.toISOString());
+    console.log("Processing campaigns:", campaigns.length);
 
-    if (remaining <= 0) {
-      c.status = "completed";
+    for (const c of campaigns) {
+      console.log("────────────────────────────");
+      console.log("Campaign ID:", c._id.toString());
+
+      const remaining = c.totalQuantity - c.sentQuantity;
+
+      console.log({
+        total: c.totalQuantity,
+        sent: c.sentQuantity,
+        remaining,
+        min: c.min,
+        max: c.max,
+        intervalMs: c.intervalMs,
+        nextRunAt: c.nextRunAt,
+      });
+
+      // ✅ Mark completed
+      if (remaining <= 0) {
+        c.status = "completed";
+        await c.save();
+        console.log("✅ Campaign completed");
+        continue;
+      }
+
+      // ✅ FIRST RUN ALWAYS ALLOWED
+      if (c.nextRunAt && c.lastRunAt && now < c.nextRunAt) {
+        console.log(
+          "⏭ Skipping until:",
+          c.nextRunAt.toISOString()
+        );
+        continue;
+      }
+
+      // ✅ VALID INTERVAL
+      const intervalMs =
+        typeof c.intervalMs === "number" && c.intervalMs > 0
+          ? c.intervalMs
+          : 60_000; // default 1 minute
+
+      // ✅ SAFE QUANTITY
+      let qty = Math.floor(
+        Math.random() * (c.max - c.min + 1)
+      ) + c.min;
+
+      qty = Math.min(qty, remaining);
+
+      if (!qty || qty <= 0) {
+        console.log("❌ Invalid qty, skipping");
+        continue;
+      }
+
+      console.log("🚀 Sending to SMM panel:", qty);
+
+      // ✅ SMM REQUEST
+      const res = await placeSmmOrder({
+        link: c.link,
+        quantity: qty,
+        serviceId: c.serviceId,
+      });
+      // return Response.json({ ok: res });
+
+
+      console.log("SMM RESPONSE:", res);
+
+      if (!res || res.success !== true) {
+        console.error("❌ SMM FAILED:", res);
+        continue;
+      }
+
+      // ✅ UPDATE DB
+      c.sentQuantity += qty;
+      c.lastRunAt = now;
+      c.nextRunAt = new Date(now.getTime() + intervalMs);
+
+      if (c.sentQuantity >= c.totalQuantity) {
+        c.status = "completed";
+      }
+
       await c.save();
-      continue;
+
+      console.log(
+        `✅ Sent ${qty}, next run at ${c.nextRunAt.toISOString()}`
+      );
     }
 
-    // Use nextRunAt for accurate drip feed
-    if (c.nextRunAt && now < c.nextRunAt) {
-      continue; // Not time yet
-    }
-    console.log("✅ Sending order to SMM panel...");
+    console.log("✅ CRON FINISHED");
 
-    // Quantity to send this run
-    const qty = Math.min(
-      remaining,
-      Math.floor(Math.random() * (c.max - c.min + 1)) + c.min
-    );
-
-    const res = await placeSmmOrder({
-      link: c.link,
-      quantity: qty,
-      serviceId: c.serviceId,
-    });
-
-    if (!res.success) {
-      console.log("SMM failed:", res.error);
-      continue;
-    }
-
-    // Update DB
-    c.sentQuantity += qty;
-    c.lastRunAt = now;
-    c.nextRunAt = new Date(now.getTime() + c.intervalMs); // NEXT run
-    if (c.sentQuantity >= c.totalQuantity) {
-      c.status = "completed";
-    }
-    await c.save();
-
-    console.log(`Sent ${qty} for campaign ${c.campaignId}, next run at ${c.nextRunAt}`);
+    return Response.json({ ok: true });
+  } catch (err) {
+    console.error("❌ CRON ERROR:", err);
+    return Response.json({ ok: false, error: "Cron failed" }, { status: 500 });
   }
-
-  return Response.json({ ok: true });
 }
