@@ -204,27 +204,24 @@ export function WhopPhantomForm({
   const onSubmit = async (data: PhantomFormValues) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-
+  
     const campaignId = `C-${Date.now()}`;
-
+  
     try {
       if (!selectedService) {
         throw new Error("No service selected");
       }
-
+  
       const min = data.quantityFrom;
       const max = data.quantityTo;
-
+  
       if (data.totalViews < min) {
         throw new Error(`Minimum quantity is ${min}`);
       }
-
+  
       const intervalMs = Math.max(0, Number(data.timeInterval) * 60_000);
-
-      let totalSent = 0;
-      let remaining = data.totalViews;
-
-      // 1️⃣ Add campaign ONCE
+  
+      // 1️⃣ Create campaign in Redux (UI ONLY)
       dispatch(
         addCampaign({
           id: campaignId,
@@ -249,71 +246,31 @@ export function WhopPhantomForm({
           },
         })
       );
-
-      // 2️⃣ Drip-feed loop
-      while (remaining > 0) {
-        /**
-         * Quantity logic (IMPORTANT)
-         * - Must be >= min
-         * - Must be <= max
-         * - Must not break remaining total
-         */
-        let qty: number;
-        qty = getRandomBetween(min, max);
-        console.log("qty", qty, "min", min, "max", max);
-        if (qty > remaining)
-          if (remaining <= qty) {
-            // last order → send exactly remaining
-            qty = remaining;
-          }
-
-        const payload = {
+  
+      // 2️⃣ Create campaign on SERVER (REAL EXECUTION)
+      const res = await fetch("/api/campaigns/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          campaignId,
           link: data.videoLink,
-          quantity: qty,
-          serviceId: String(selectedService.service),
-        };
-        // console.log(selectedService)
-        // console.log("SMM REQUEST PAYLOAD 👉", payload);
-
-        const res = await placeSmmOrder(payload);
-
-        // console.log("SMM RESPONSE 👈", res);
-
-
-
-        // 🔓 Allow user interaction AFTER first order is sent
-        if (totalSent === 0) {
-          setIsSubmitting(false);
-        }
-
-        totalSent += qty;
-        remaining -= qty;
-
-        const progress = Math.min(
-          100,
-          Math.round((totalSent / data.totalViews) * 100)
-        );
-
-        // 3️⃣ Update ONLY Redux for progress
-        dispatch(
-          updateCampaignProgress({
-            id: campaignId,
-            sent: totalSent,
-            progress,
-            status: remaining === 0 ? "Completed" : "In Progress",
-          })
-        );
-
-        if (remaining > 0 && intervalMs > 0) {
-          await sleep(intervalMs);
-        }
-      }
-
-      toast({
-        title: "Campaign Completed",
-        description: `Total ${totalSent} sent successfully`,
+          serviceId: data.serviceId,
+          totalQuantity: data.totalViews,
+          min,
+          max,
+          intervalMs,
+        }),
       });
-
+  
+      if (!res.ok) {
+        throw new Error("Failed to create campaign");
+      }
+  
+      toast({
+        title: "Campaign Started",
+        description: "Your order will run in the background.",
+      });
+  
       form.reset();
     } catch (err: any) {
       dispatch(
@@ -322,16 +279,17 @@ export function WhopPhantomForm({
           status: "Failed",
         })
       );
-
+  
       toast({
         title: "Order Failed",
         description: err?.message || "Something went wrong",
         variant: "destructive",
       });
-
+    } finally {
       setIsSubmitting(false);
     }
   };
+  
 
 
 

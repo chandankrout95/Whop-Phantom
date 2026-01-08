@@ -1,7 +1,6 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -28,6 +27,11 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+    ],
+  },
+  devServer: {
+    allowedDevOrigins: [
+      "https://3000-firebase-studio-1763984640117.cluster-zumahodzirciuujpqvsniawo3o.cloudworkstations.dev"
     ],
   },
 };
