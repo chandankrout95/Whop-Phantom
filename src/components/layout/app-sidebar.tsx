@@ -32,11 +32,12 @@ import { PinLockDialog } from '../pin-lock-dialog';
 
 const navItems: NavItem[] = [
   { href: '/dashboard', title: 'Dashboard', icon: LayoutDashboard, locked: true },
-  { href: '/dashboard/new-order', title: 'New Order', icon: PlusCircle, locked: true },
-  { href: '/dashboard/orders', title: 'Orders', icon: ListOrdered, locked: true },
-  { href: '/dashboard/services', title: 'Services', icon: Package, locked: true },
-  { href: '/dashboard/panels', title: 'Panels', icon: Server, locked: true },
+  // { href: '/dashboard/new-order', title: 'New Order', icon: PlusCircle, locked: true },
+  // { href: '/dashboard/orders', title: 'Orders', icon: ListOrdered, locked: true },
+  // { href: '/dashboard/services', title: 'Services', icon: Package, locked: true },
+  // { href: '/dashboard/panels', title: 'Panels', icon: Server, locked: true },
   { href: '/dashboard/whop-phantom', title: 'Whop Phantom', icon: Ghost, locked: false },
+  { href: '/dashboard/delete-phantom', title: 'delete Phantom', icon: Ghost, locked: false },
 ];
 
 export function AppSidebar() {

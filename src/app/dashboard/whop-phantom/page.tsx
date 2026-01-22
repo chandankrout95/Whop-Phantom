@@ -198,9 +198,9 @@ export default function WhopPhantomPage() {
             <PhantomDashboard />
           </div>
         </div>
-        <div className="flex-grow overflow-hidden">
+        {/* <div className="flex-grow overflow-hidden">
           <CampaignHistory campaigns={campaigns} onCampaignAction={handleCampaignAction} />
-        </div>
+        </div> */}
       </div>
       {editingCampaign && (
         <EditCampaignForm

@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
     { href: '/dashboard/services', title: 'Services', icon: Package, locked: true },
     { href: '/dashboard/panels', title: 'Panels', icon: Server, locked: true },
     { href: '/dashboard/whop-phantom', title: 'Whop Phantom', icon: Ghost, locked: false },
+    { href: '/dashboard/whop', title: 'Whop ', icon: Ghost, locked: false },
 ];
 
 function DashboardRootLayout({ children }: { children: React.ReactNode }) {
@@ -79,11 +80,11 @@ function DashboardRootLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-            <div className="flex items-center gap-4">
+        <header className="sticky top-0 py-3 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+            {/* <div className="flex items-center gap-4">
                 <SidebarTrigger />
                 <NewOrderForm />
-            </div>
+            </div> */}
             <div className="flex-1 text-center">
                 <h1 className="text-xl font-bold tracking-tight text-primary animate-flicker-glitch" style={{ textShadow: '0 0 10px hsl(var(--primary))' }}>
                     Whop Phantom

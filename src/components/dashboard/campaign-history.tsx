@@ -1,24 +1,11 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import type { RootState } from "@/lib/store"; // adjust the path to your store
-import type { Order } from "@/lib/types";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import type { Order } from "@/store/campaignSlice"; 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "../ui/progress";
 import { MoreVertical, Pause, Play, Power, RefreshCcw, Shield, ShieldAlert, ShieldCheck, Pencil } from "lucide-react";
@@ -26,21 +13,16 @@ import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
-// --------- Reuse your helper components ---------
 const AntiCheatIcon = ({ status }: { status: string }) => {
     switch (status) {
-        case 'SAFE':
-            return <ShieldCheck className="h-5 w-5 text-green-500" />;
-        case 'MONITORING':
-            return <Shield className="h-5 w-5 text-yellow-500 animate-pulse" />;
-        case 'DETECTED':
-            return <ShieldAlert className="h-5 w-5 text-red-500 animate-pulse" />;
-        default:
-            return <Shield className="h-5 w-5 text-gray-500" />;
+        case 'SAFE': return <ShieldCheck className="h-5 w-5 text-green-500" />;
+        case 'MONITORING': return <Shield className="h-5 w-5 text-yellow-500 animate-pulse" />;
+        case 'DETECTED': return <ShieldAlert className="h-5 w-5 text-red-500 animate-pulse" />;
+        default: return <Shield className="h-5 w-5 text-gray-500" />;
     }
 }
 
-const getStatusVariant = (status: Order['status']) => {
+const getStatusVariant = (status: string) => {
     switch (status) {
       case "Completed": return "default";
       case "In Progress": return "secondary";
@@ -51,13 +33,14 @@ const getStatusVariant = (status: Order['status']) => {
     }
 }
 
-const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart' | 'edit') => void; }) => {
-    // console.log(campaign)
+const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: string, action: any) => void; }) => {
     const [countdown, setCountdown] = useState(0);
+    
+    // SAFE DATA PARSING
     const isDripFeed = !!campaign.dripFeed;
-    const totalQuantity = campaign.quantity;
-    const currentDelivered = isDripFeed ? campaign.dripFeed!.totalOrdered : 0;
-    const completionPercentage = campaign.progress || 0;
+    const totalQuantity = campaign.quantity ?? 0;
+    const currentDelivered = isDripFeed ? (campaign.dripFeed?.totalOrdered ?? 0) : (campaign.sent ?? 0);
+    const completionPercentage = campaign.progress ?? 0;
     
     useEffect(() => {
         if (campaign.status !== 'In Progress') {
@@ -66,9 +49,9 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
         }
 
         const calculateCountdown = () => {
-            if (isDripFeed) {
+            if (isDripFeed && campaign.dripFeed?.nextRun) {
                 const now = Date.now();
-                const next = campaign.dripFeed!.nextRun;
+                const next = campaign.dripFeed.nextRun;
                 const diff = Math.max(0, Math.floor((next - now) / 1000));
                 setCountdown(diff);
             } else {
@@ -84,10 +67,17 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
     return (
         <TableRow>
             <TableCell>
-                <div className="font-medium">{campaign.dripFeed?.campaignName || `Order ${campaign.id.slice(-6)}`}</div>
-                <div className="text-xs text-muted-foreground truncate max-w-[150px]">{campaign.link}</div>
+                <div className="font-medium">
+                    {campaign.campaignName || campaign.dripFeed?.campaignName || `Order ${campaign.id?.slice(-6) ?? 'N/A'}`}
+                </div>
+                <div className="text-xs text-muted-foreground truncate max-w-[150px]">
+                    {campaign.link || "No link provided"}
+                </div>
             </TableCell>
-            <TableCell className="text-center">{totalQuantity.toLocaleString()}</TableCell>
+            <TableCell className="text-center">
+                {/* Fixed the toLocaleString crash by ensuring it's never undefined */}
+                {totalQuantity.toLocaleString()}
+            </TableCell>
             <TableCell>
                 <div className="flex flex-col gap-1 items-center">
                     <span>{currentDelivered.toLocaleString()}</span>
@@ -98,8 +88,8 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
                 {campaign.status === 'In Progress' && countdown > 0 ? `${countdown}s` : '--'}
             </TableCell>
             <TableCell className="text-center">
-                <Badge variant={getStatusVariant(campaign.status)}>
-                    {campaign.status}
+                <Badge variant={getStatusVariant(campaign.status ?? "")}>
+                    {campaign.status ?? "Pending"}
                 </Badge>
             </TableCell>
             <TableCell className="text-center">
@@ -121,7 +111,7 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
                             <MoreVertical className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent>
+                    <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onAction(campaign.id, 'edit')}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
@@ -135,16 +125,9 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
                                 <Play className="mr-2 h-4 w-4" /> Resume
                             </DropdownMenuItem>
                         )}
-                        {(campaign.status === 'In Progress' || campaign.status === 'Paused') && (
-                            <DropdownMenuItem onClick={() => onAction(campaign.id, 'stop')}>
-                                <Power className="mr-2 h-4 w-4" /> Stop
-                            </DropdownMenuItem>
-                        )}
-                        {campaign.status === 'Completed' && (
-                            <DropdownMenuItem onClick={() => onAction(campaign.id, 'restart')}>
-                                <RefreshCcw className="mr-2 h-4 w-4" /> Restart
-                            </DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem onClick={() => onAction(campaign.id, 'stop')} className="text-destructive">
+                            <Power className="mr-2 h-4 w-4" /> Stop
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </TableCell>
@@ -152,29 +135,28 @@ const CampaignRow = ({ campaign, onAction }: { campaign: Order; onAction: (id: s
     );
 }
 
-// --------- Redux-connected CampaignHistory ---------
-export function CampaignHistory({ onCampaignAction }: { onCampaignAction: (id: string, action: 'pause' | 'resume' | 'stop' | 'restart' | 'edit') => void; }) {
-    const campaigns = useSelector((state: RootState) => state.campaigns.campaigns); // ✅ Redux selector
+export function CampaignHistory({ onCampaignAction }: { onCampaignAction: (id: string, action: any) => void; }) {
+    const campaigns = useSelector((state: RootState) => state.campaigns.campaigns);
 
     return (
         <Card className="bg-background/80 backdrop-blur-sm border-border/50 h-full flex flex-col">
           <CardHeader>
-            <CardTitle className="text-foreground">Live Campaign History</CardTitle>
-            <CardDescription>A live log of your botting campaigns from this session.</CardDescription>
+            <CardTitle>Live Campaign History</CardTitle>
+            <CardDescription>Real-time log of your SMM and Google Sheet tasks.</CardDescription>
           </CardHeader>
-          <CardContent className="flex-grow overflow-y-auto">
-            {campaigns.length > 0 ? (
+          <CardContent className="flex-grow overflow-auto">
+            {campaigns && campaigns.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Campaign</TableHead>
-                    <TableHead className="text-center">Total Views</TableHead>
-                    <TableHead className="text-center">Views Delivered</TableHead>
-                    <TableHead className="text-center">Next Order</TableHead>
+                    <TableHead className="text-center">Total</TableHead>
+                    <TableHead className="text-center">Delivered</TableHead>
+                    <TableHead className="text-center">Next</TableHead>
                     <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="text-center">Anti-Cheat</TableHead>
-                    <TableHead className="text-center">Flagged</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-center">Safety</TableHead>
+                    <TableHead className="text-center">Flag</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -184,9 +166,8 @@ export function CampaignHistory({ onCampaignAction }: { onCampaignAction: (id: s
                 </TableBody>
               </Table>
             ) : (
-                <div className="flex flex-col items-center justify-center h-48 gap-2 text-center">
-                    <p className="text-lg font-semibold text-foreground">No Campaigns Yet</p>
-                    <p className="text-sm text-muted-foreground">Start a new botting task to see its history here.</p>
+                <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
+                    <p>No Campaigns Active</p>
                 </div>
             )}
           </CardContent>

@@ -1,24 +1,16 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, model, models } from 'mongoose';
 
-const CampaignSchema = new mongoose.Schema({
-  campaignId: String,
-  link: String,
-  serviceId: String,
-
-  totalQuantity: Number,
-  sentQuantity: { type: Number, default: 0 },
-
-  min: Number,
-  max: Number,
-  intervalMs: Number,
-  nextRunAt: Date, // ← new field
-
-  status: { type: String, default: "processing" },
-  lastRunAt: Date,
-
+const CampaignSchema = new Schema({
+  campaignId: { type: String }, // The GS-123456 ID from frontend
+  campaignName: { type: String }, // "GoogleSheet-..."
+  sheetUrl: { type: String, required: true },
+  sheetName: { type: String, default: 'view' },
+  status: { 
+    type: String, 
+    enum: ['active', 'completed', 'paused', 'failed'], 
+    default: 'active' 
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
-export const Campaign =
-  mongoose.models.Campaign ||
-  mongoose.model("Campaign", CampaignSchema);
+export const Campaign = models.Camp || model('Camp', CampaignSchema);

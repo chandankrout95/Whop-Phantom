@@ -3,18 +3,23 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 export interface Order {
   id: string;
   link: string;
-  quantity: number;        // total ordered
-  sent: number;            // how much sent so far
-  progress: number;        // 0–100
+  quantity: number;
+  sent: number;
+  progress: number;
   status: string;
   createdAt: string;
-  serviceId: string;
-  charge: number;
-  panelId: string;
-  userId: string;
+  campaignName?: string; // Added for GS campaigns
+  serviceId?: string;
+  charge?: number;
+  panelId?: string;
+  userId?: string;
   antiCheatStatus?: string;
   flagged?: boolean;
-  dripFeed?: any;
+  dripFeed?: {
+    campaignName?: string;
+    totalOrdered: number;
+    nextRun: number;
+  };
 }
 
 interface CampaignState {
@@ -30,9 +35,12 @@ const campaignSlice = createSlice({
   initialState,
   reducers: {
     addCampaign: (state, action: PayloadAction<Order>) => {
-      state.campaigns.unshift(action.payload);
+      // Prevent duplicates if the user clicks twice
+      const exists = state.campaigns.find(c => c.id === action.payload.id);
+      if (!exists) {
+        state.campaigns.unshift(action.payload);
+      }
     },
-
     updateCampaignProgress: (
       state,
       action: PayloadAction<{
@@ -42,29 +50,18 @@ const campaignSlice = createSlice({
         status?: string;
       }>
     ) => {
-      const campaign = state.campaigns.find(
-        c => c.id === action.payload.id
-      );
-
+      const campaign = state.campaigns.find(c => c.id === action.payload.id);
       if (campaign) {
         campaign.sent = action.payload.sent;
         campaign.progress = action.payload.progress;
-        if (action.payload.status) {
-          campaign.status = action.payload.status;
-        }
+        if (action.payload.status) campaign.status = action.payload.status;
       }
     },
-
     clearCampaigns: (state) => {
       state.campaigns = [];
     },
   },
 });
 
-export const {
-  addCampaign,
-  updateCampaignProgress,
-  clearCampaigns,
-} = campaignSlice.actions;
-
+export const { addCampaign, updateCampaignProgress, clearCampaigns } = campaignSlice.actions;
 export default campaignSlice.reducer;
