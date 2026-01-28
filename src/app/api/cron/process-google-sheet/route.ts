@@ -5,7 +5,7 @@ import { getSheetRows, updateSheetStatus } from "@/lib/googleSheet";
 import { placeSmmOrder } from "@/lib/smm";
 
 export const revalidate = 0;
-
+//try
 export async function GET(req: Request) {
   try {
     await dbConnect();
